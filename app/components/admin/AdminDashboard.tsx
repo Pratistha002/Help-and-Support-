@@ -66,7 +66,7 @@ const ADMIN_MODULES: {
     hint: "Real-time conversations",
     description: "Accept chat requests, message users, and raise support tokens.",
     theme: "violet",
-    color: "#7c3aed",
+    color: "#2c4f72",
   },
   {
     id: "manage-form",
@@ -75,7 +75,7 @@ const ADMIN_MODULES: {
     hint: "Agent-raised tickets",
     description: "Support tickets raised by agents during live chat conversations.",
     theme: "violet",
-    color: "#7c3aed",
+    color: "#1e3a5f",
   },
   {
     id: "manage-email",
@@ -84,7 +84,7 @@ const ADMIN_MODULES: {
     hint: "Inbox tickets",
     description: "Track inbound emails and respond to customer support requests.",
     theme: "blue",
-    color: "#6366f1",
+    color: "#3170a5",
   },
   {
     id: "status-tracking",
@@ -93,7 +93,7 @@ const ADMIN_MODULES: {
     hint: "All tickets",
     description: "All tickets — pending, open, resolved and closed.",
     theme: "teal",
-    color: "#0d9488",
+    color: "#3d6b6b",
   },
   {
     id: "escalated-tickets",
@@ -102,7 +102,7 @@ const ADMIN_MODULES: {
     hint: "Technical escalation",
     description: "Escalated tickets, assignees, and technical team management.",
     theme: "red",
-    color: "#e11d48",
+    color: "#b91c1c",
   },
   {
     id: "manage-call",
@@ -111,7 +111,7 @@ const ADMIN_MODULES: {
     hint: "Callback queue",
     description: "Twilio call tracking, inbound logs, and support tickets.",
     theme: "orange",
-    color: "#f97316",
+    color: "#b45309",
   },
 ];
 
