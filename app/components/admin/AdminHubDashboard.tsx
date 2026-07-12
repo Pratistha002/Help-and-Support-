@@ -87,7 +87,7 @@ export function AdminHubDashboard({
       <section className="hs-admin-hub" aria-label="Help desk hub">
         <header className="admin-page__hero hs-admin-hub__hero-unified">
           <div className="hs-admin-hub__hero-main">
-            <p className="admin-page__eyebrow">SaarthiWorkforce Admin · Support desk</p>
+            <p className="admin-page__eyebrow">SX Workforce Admin · Support desk</p>
             <h1 className="admin-page__title">Help &amp; Support Management</h1>
             <p className="admin-page__subtitle">Loading ticket overview…</p>
           </div>
@@ -117,7 +117,7 @@ export function AdminHubDashboard({
     <section className="hs-admin-hub" aria-label="Help desk hub">
       <header className="admin-page__hero hs-admin-hub__hero-unified">
         <div className="hs-admin-hub__hero-main">
-          <p className="admin-page__eyebrow">SaarthiWorkforce Admin · Support desk</p>
+          <p className="admin-page__eyebrow">SX Workforce Admin · Support desk</p>
           <h1 className="admin-page__title">Help &amp; Support Management</h1>
           <p className="admin-page__subtitle">
             Tickets, omnichannel support &amp; analytics — open a workflow module to respond to customers.
