@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { NavBar } from "./components/NavBar";
+import { InterviewXFooter } from "./components/InterviewXFooter";
+import { WorkforceAuthBridge } from "./components/WorkforceAuthBridge";
 
 export const metadata: Metadata = {
-  title: "Employee Management",
-  description: "Employee management dashboard UI for managers and HR teams.",
+  title: "Saarthi Workforce — Help & Support",
+  description: "Employee support hub with FAQs, AI chat, live agents, and tickets.",
 };
 
 const globalCss = `
@@ -12,8 +15,8 @@ const globalCss = `
     margin: 0;
     padding: 0;
     font-family: Inter, "Segoe UI", system-ui, sans-serif;
-    background: #f8fafc;
-    color: #0f172a;
+    background: #f0f3f7;
+    color: #1a2332;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
@@ -92,8 +95,8 @@ const globalCss = `
   }
   .manager-toolbar-field:focus {
     outline: none;
-    border-color: #818cf8 !important;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22);
+    border-color: #3170a5 !important;
+    box-shadow: 0 0 0 3px rgba(49, 112, 165, 0.18);
   }
   .ui-badge {
     display: inline-flex;
@@ -101,9 +104,9 @@ const globalCss = `
     gap: 6px;
     padding: 4px 10px;
     border-radius: 999px;
-    background: #eef2ff;
-    border: 1px solid #c7d2fe;
-    color: #4338ca;
+    background: #eff6ff;
+    border: 1px solid rgba(49, 112, 165, 0.2);
+    color: #3170a5;
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.04em;
@@ -118,60 +121,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Instrument+Sans:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
         <meta name="theme-color" content="#0f172a" />
         <style suppressHydrationWarning dangerouslySetInnerHTML={{ __html: globalCss }} />
       </head>
       <body>
-        <header
-          style={{
-            background: "#0f172a",
-            color: "#fff",
-            padding: "12px clamp(16px, 3vw, 24px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 900,
-                fontSize: 14,
-              }}
-            >
-              EM
-            </div>
-            <div>
-              <div style={{ fontWeight: 900, fontSize: 15 }}>Employee Management</div>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)" }}>Help & Support · UI Preview</div>
-            </div>
-          </div>
-          <span className="ui-badge">UI only · mock data</span>
-        </header>
+        <WorkforceAuthBridge />
+        <NavBar />
         <main
           style={{
             width: "100%",
             maxWidth: 1280,
             margin: "0 auto",
-            padding: "18px clamp(12px, 3vw, 20px) 32px",
+            padding: "18px clamp(12px, 3vw, 20px) 0",
             boxSizing: "border-box",
             minWidth: 0,
           }}
         >
           {children}
         </main>
+        <InterviewXFooter />
       </body>
     </html>
   );
