@@ -1,0 +1,620 @@
+/* ═══════════════════════════════════════════════
+   SupportSoftphone — Agent browser call handler
+═══════════════════════════════════════════════ */
+
+.hs-softphone {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Main panel ── */
+.hs-softphone__panel {
+  border-radius: 1.25rem;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.hs-softphone__panel--ready {
+  border-color: #86efac;
+  box-shadow: 0 4px 20px rgba(22, 163, 74, 0.1);
+}
+
+.hs-softphone__panel--onCall {
+  border-color: #93c5fd;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15);
+}
+
+.hs-softphone__panel--error {
+  border-color: #fca5a5;
+  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.08);
+}
+
+/* ── Header ── */
+.hs-softphone__header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f8fafc, #eff6ff);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.hs-softphone__header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.hs-softphone__header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: #2563eb;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.hs-softphone__header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.hs-softphone__header-text h3 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.hs-softphone__header-text p {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.hs-softphone__state-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* State pill */
+.hs-softphone__state-pill {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.hs-softphone__state-pill--ready {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+}
+
+.hs-softphone__state-pill--connecting {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.hs-softphone__state-pill--onCall {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+  animation: hs-sp-pulse-blue 2s ease-in-out infinite;
+}
+
+.hs-softphone__state-pill--error {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+@keyframes hs-sp-pulse-blue {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+  50%       { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15); }
+}
+
+/* ── Alert banners ── */
+.hs-softphone__alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.7rem 1.25rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.hs-softphone__alert svg { flex-shrink: 0; margin-top: 0.1rem; }
+
+.hs-softphone__alert--warn {
+  background: #fffbeb;
+  color: #92400e;
+  border-bottom: 1px solid #fde68a;
+}
+
+.hs-softphone__alert--error {
+  background: #fff1f2;
+  color: #9f1239;
+  border-bottom: 1px solid #fecdd3;
+}
+
+.hs-softphone__retry-btn {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: #be123c;
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hs-softphone__retry-btn:hover {
+  background: #9f1239;
+}
+
+.hs-softphone__alert code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  background: rgba(0,0,0,0.07);
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+}
+
+/* ── Active call panel ── */
+.hs-softphone__active-call {
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #eff6ff, #eef2ff);
+  border-bottom: 1px solid #bfdbfe;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'main'
+    'controls';
+  gap: 0.85rem;
+  align-items: stretch;
+}
+
+.hs-softphone__active-call-main {
+  grid-area: main;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.hs-softphone__active-call-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.hs-softphone__active-call-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.hs-softphone__active-call-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  animation: hs-sp-pulse-blue 2s ease-in-out infinite;
+}
+
+.hs-softphone__active-call-name {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hs-softphone__active-call-timer {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.hs-softphone__active-call-live {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #16a34a;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.hs-softphone__live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  animation: hs-sp-blink 1s step-end infinite;
+}
+
+@keyframes hs-sp-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.hs-softphone__active-call-controls {
+  grid-area: controls;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+@media (min-width: 480px) {
+  .hs-softphone__active-call {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'main controls';
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .hs-softphone__active-call-controls {
+    justify-content: flex-end;
+  }
+}
+
+.hs-softphone__ctrl-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.65rem;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #374151;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  min-width: 4rem;
+}
+
+.hs-softphone__ctrl-btn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.hs-softphone__ctrl-btn--active {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+.hs-softphone__ctrl-btn--hangup {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}
+
+.hs-softphone__ctrl-btn--hangup:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* ── Footer (go online/offline) ── */
+.hs-softphone__footer {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.hs-softphone__hint {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.hs-softphone__toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+
+.hs-softphone__toggle-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.hs-softphone__toggle-btn--primary {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+.hs-softphone__toggle-btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+  transform: translateY(-1px);
+}
+
+.hs-softphone__toggle-btn--danger {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
+}
+
+.hs-softphone__toggle-btn--danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════
+   Incoming call overlay
+═══════════════════════════════════════════════ */
+/* ─── In-component incoming banner (fallback, always visible inside softphone panel) ─── */
+.hs-softphone__incoming-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 1rem;
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  border: 2px solid #22c55e;
+  border-radius: 12px;
+  animation: hs-sp-ring 0.6s ease infinite alternate;
+}
+
+@keyframes hs-sp-ring {
+  from { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+  to   { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+}
+
+.hs-softphone__incoming-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #22c55e;
+  color: #fff;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: hs-sp-phone-ring 0.5s ease infinite alternate;
+}
+
+@keyframes hs-sp-phone-ring {
+  from { transform: rotate(-15deg); }
+  to   { transform: rotate(15deg); }
+}
+
+.hs-softphone__incoming-banner-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.hs-softphone__incoming-banner-text strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.hs-softphone__incoming-banner-text span {
+  font-size: 0.82rem;
+  color: #166534;
+}
+
+.hs-softphone__answer-btn--sm,
+.hs-softphone__decline-btn--sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 700;
+}
+
+.hs-softphone__answer-btn--sm {
+  background: #16a34a;
+  color: #fff;
+}
+
+.hs-softphone__decline-btn--sm {
+  background: #dc2626;
+  color: #fff;
+}
+
+/* ─── Portal overlay (highest possible z-index) ─── */
+.hs-softphone__incoming-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  animation: hs-sp-overlay-in 0.2s ease-out;
+}
+
+@keyframes hs-sp-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.hs-softphone__incoming-card {
+  width: min(100%, 380px);
+  background: #fff;
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.3);
+  overflow: hidden;
+  animation: hs-sp-card-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-align: center;
+}
+
+@keyframes hs-sp-card-in {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.hs-softphone__incoming-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 1.25rem;
+  background: linear-gradient(135deg, #1d4ed8, #4f46e5);
+  color: #fff;
+}
+
+.hs-softphone__incoming-ring svg {
+  animation: hs-sp-ring 0.6s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.5));
+}
+
+@keyframes hs-sp-ring {
+  from { transform: rotate(-15deg) scale(1); }
+  to   { transform: rotate(15deg)  scale(1.1); }
+}
+
+.hs-softphone__incoming-body {
+  padding: 1.25rem 1.5rem 0.75rem;
+}
+
+.hs-softphone__incoming-label {
+  margin: 0 0 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hs-softphone__incoming-number {
+  margin: 0 0 0.25rem;
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: #0f172a;
+  word-break: break-all;
+}
+
+.hs-softphone__incoming-sub {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.hs-softphone__incoming-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 1.25rem;
+}
+
+.hs-softphone__answer-btn,
+.hs-softphone__decline-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.1rem;
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+
+.hs-softphone__answer-btn {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-right: 1px solid #f1f5f9;
+}
+
+.hs-softphone__answer-btn:hover {
+  background: #dcfce7;
+}
+
+.hs-softphone__decline-btn {
+  background: #fff1f2;
+  color: #e11d48;
+}
+
+.hs-softphone__decline-btn:hover {
+  background: #ffe4e6;
+}
+
+@media (max-width: 479px) {
+  .hs-softphone__active-call-controls {
+    width: 100%;
+  }
+
+  .hs-softphone__ctrl-btn {
+    flex: 1;
+    min-width: 0;
+  }
+}

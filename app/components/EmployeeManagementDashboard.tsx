@@ -535,9 +535,6 @@ export function EmployeeManagementDashboard() {
         ) : null}
       </div>
 
-      <footer style={{ textAlign: "center", padding: "24px 0 8px", color: "#94a3b8", fontSize: 12 }}>
-        Employee Management UI · Help & Support · Built with Next.js, React & Framer Motion
-      </footer>
     </div>
   );
 }

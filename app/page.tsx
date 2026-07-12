@@ -1,5 +1,5 @@
-import { EmployeeManagementDashboard } from "./components/EmployeeManagementDashboard";
+import { HomeLanding } from "./components/HomeLanding";
 
 export default function HomePage() {
-  return <EmployeeManagementDashboard />;
+  return <HomeLanding />;
 }
