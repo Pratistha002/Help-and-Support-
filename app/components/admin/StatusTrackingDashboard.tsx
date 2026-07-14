@@ -27,7 +27,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Le
 
 const STATUS_CHART_COLORS: Record<string, string> = {
   OPEN: "#3b82f6",
-  IN_PROGRESS: "#8b5cf6",
+  IN_PROGRESS: "#3170a5",
   PENDING: "#f59e0b",
   PENDING_WITH_USER: "#0891b2",
   ESCALATED: "#ef4444",
@@ -239,7 +239,7 @@ export function StatusTrackingDashboard({
           label="Avg resolution"
           value={stats.averageResponseTimeHours ?? "—"}
           suffix={stats.averageResponseTimeHours != null ? "h" : ""}
-          color="#6366f1"
+          color="#2c4f72"
           sub="Time to close"
         />
       </div>
@@ -291,7 +291,7 @@ export function StatusTrackingDashboard({
                     stats.escalatedTickets,
                     stats.resolvedTickets,
                   ],
-                  backgroundColor: ["#3b82f6", "#8b5cf6", "#f59e0b", "#0891b2", "#ef4444", "#10b981"],
+                  backgroundColor: ["#3b82f6", "#3170a5", "#f59e0b", "#0891b2", "#ef4444", "#10b981"],
                   borderRadius: 6,
                 }],
               }}

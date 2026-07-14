@@ -24,6 +24,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPPORT_EMAIL: ${NEXT_PUBLIC_SUPPORT_EMAIL:-Saarthiworkforce@gmail.com}
+        NEXT_PUBLIC_SUPPORT_PHONE_DISPLAY: ${NEXT_PUBLIC_SUPPORT_PHONE_DISPLAY:-+1 878 732 2485}
+        NEXT_PUBLIC_SUPPORT_PHONE_E164: ${NEXT_PUBLIC_SUPPORT_PHONE_E164:-+18787322485}
+        NEXT_PUBLIC_WORKFORCE_APP_URL: ${NEXT_PUBLIC_WORKFORCE_APP_URL:-http://localhost:3002}
+        NEXT_PUBLIC_SAARTHIX_URL: ${NEXT_PUBLIC_SAARTHIX_URL:-https://saarthix.com}
+        NEXT_PUBLIC_INTERVIEWX_ORIGIN: ${NEXT_PUBLIC_INTERVIEWX_ORIGIN:-}
+        NEXT_PUBLIC_HELP_SUPPORT_URL: ${NEXT_PUBLIC_HELP_SUPPORT_URL:-}
     container_name: help-support-web
     restart: unless-stopped
     ports:
@@ -42,7 +50,12 @@ services:
       # Brevo + Twilio — loaded from env_file (.env); listed here for visibility
       MAIL_PROVIDER: ${MAIL_PROVIDER:-brevo}
       BREVO_API_KEY: ${BREVO_API_KEY:-}
+      BREVO_SMTP_LOGIN: ${BREVO_SMTP_LOGIN:-}
+      BREVO_SMTP_USER: ${BREVO_SMTP_USER:-}
+      BREVO_SMTP_KEY: ${BREVO_SMTP_KEY:-}
       APP_MAIL_FROM: ${APP_MAIL_FROM:-}
+      SUPPORT_EMAIL_TO: ${SUPPORT_EMAIL_TO:-}
+      NEXT_PUBLIC_SUPPORT_EMAIL: ${NEXT_PUBLIC_SUPPORT_EMAIL:-Saarthiworkforce@gmail.com}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
       TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:-}

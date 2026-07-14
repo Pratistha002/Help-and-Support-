@@ -8,14 +8,20 @@ import {
   renderTemplate,
   buildTemplateVars,
 } from "@/lib/supportTemplates";
-import { ClientDateTime } from "./ClientDateTime";import {
+import { ClientDateTime } from "./ClientDateTime";
+import { TechnicalEscalationPanel } from "./TechnicalEscalationPanel";
+import {
   IconCalendar,
   IconCheckCircle,
+  IconChevronDown,
+  IconChevronUp,
   IconFolder,
   IconHistory,
   IconMail,
   IconMessage,
+  IconPhone,
   IconRefresh,
+  IconSend,
   IconSendPlane,
   IconSparkle,
   IconTag,
@@ -25,6 +31,7 @@ import { ClientDateTime } from "./ClientDateTime";import {
   IconX,
 } from "./AdminIcons";
 import "./ticket-detail.css";
+import "./escalated-tickets.css";
 
 function customerInitials(name?: string): string {
   if (!name?.trim()) return "?";
@@ -79,6 +86,7 @@ type Props = {
   onNotifyEmailChange: (v: boolean) => void;
   onNotifySmsChange: (v: boolean) => void;
   showEmailChannel?: boolean;
+  onAssigned?: (data: any) => void;
 };
 
 function ticketUserName(t: any) {
@@ -106,66 +114,6 @@ function ticketNeedsAccept(ticket: any) {
     && !ticket?.assignedAdminEmail && !ticket?.assignedAgentEmail;
 }
 
-type SmsComposerProps = {
-  idPrefix: string;
-  smsTemplateId: string;
-  onTemplateChange: (id: string) => void;
-  smsPreview: string;
-  onPreviewChange: (value: string) => void;
-  smsPhone: string;
-  onPhoneChange: (value: string) => void;
-  onSend: () => void;
-};
-
-function SmsComposer({
-  idPrefix,
-  smsTemplateId,
-  onTemplateChange,
-  smsPreview,
-  onPreviewChange,
-  smsPhone,
-  onPhoneChange,
-  onSend,
-}: SmsComposerProps) {
-  const canSend = Boolean(smsPreview.trim() && smsPhone.trim());
-  const templateId = `${idPrefix}-sms-template`;
-  const phoneId = `${idPrefix}-sms-phone`;
-  const messageId = `${idPrefix}-sms-message`;
-
-  return (
-    <div className="admin-composer admin-sms-composer hs-sms-composer">
-      <h4>Send SMS</h4>
-      <label htmlFor={templateId}>Template</label>
-      <select id={templateId} value={smsTemplateId} onChange={(e) => onTemplateChange(e.target.value)}>
-        {SUPPORT_SMS_TEMPLATES.map((tpl) => (
-          <option key={tpl.id} value={tpl.id}>{tpl.label}</option>
-        ))}
-      </select>
-      <label htmlFor={phoneId}>Phone number</label>
-      <input
-        id={phoneId}
-        type="tel"
-        value={smsPhone}
-        onChange={(e) => onPhoneChange(e.target.value)}
-        placeholder="e.g. +91 98765 43210"
-        autoComplete="tel"
-      />
-      <label htmlFor={messageId}>Message</label>
-      <textarea
-        id={messageId}
-        rows={4}
-        value={smsPreview}
-        onChange={(e) => onPreviewChange(e.target.value)}
-        maxLength={320}
-        placeholder="Choose a template or type your message…"
-      />
-      <button type="button" className="admin-btn-sm" onClick={onSend} disabled={!canSend}>
-        {canSend ? `Send SMS to ${smsPhone.trim()}` : "Enter phone and message to send"}
-      </button>
-    </div>
-  );
-}
-
 export function TicketDetailPanel({
   ticket,
   detail,
@@ -183,6 +131,7 @@ export function TicketDetailPanel({
   onNotifyEmailChange,
   onNotifySmsChange,
   showEmailChannel = true,
+  onAssigned,
 }: Props) {
   const [activeTab, setActiveTab] = useState("overview");
   const prevId = useRef<string | null>(null);
@@ -192,6 +141,8 @@ export function TicketDetailPanel({
   const [emailPreview, setEmailPreview] = useState("");
   const [smsPreview, setSmsPreview] = useState("");
   const [smsPhone, setSmsPhone] = useState("");
+  const [emailOpen, setEmailOpen] = useState(true);
+  const [smsOpen, setSmsOpen] = useState(true);
 
   const t = detail?.ticket || ticket;
   const id = String(t?._id || t?.id || "");
@@ -200,6 +151,8 @@ export function TicketDetailPanel({
     if (id !== prevId.current) {
       setActiveTab("overview");
       setSmsPhone(ticketUserPhone(t) || "");
+      setEmailOpen(true);
+      setSmsOpen(true);
       prevId.current = id || null;
     }
   }, [id, t]);
@@ -222,12 +175,17 @@ export function TicketDetailPanel({
   const agentEmail = ticketAgentEmail(t);
   const emailTemplateFieldId = `${fieldIdPrefix}-email-template`;
   const emailMessageFieldId = `${fieldIdPrefix}-email-message`;
+  const smsTemplateFieldId = `${fieldIdPrefix}-sms-template`;
+  const smsPhoneFieldId = `${fieldIdPrefix}-sms-phone`;
+  const smsMessageFieldId = `${fieldIdPrefix}-sms-message`;
+  const canSendSms = Boolean(smsPreview.trim() && smsPhone.trim());
+  const customerEmail = ticketUserEmail(t);
+  const hasEmail = Boolean(customerEmail && !customerEmail.includes("@guest."));
 
   const tabs = [
     { key: "overview", icon: IconFolder, label: "Overview" },
     { key: "status", icon: IconRefresh, label: "Status", badge: statusLabel(t.status) },
     { key: "technical", icon: IconWrench, label: "Assign team" },
-    { key: "sms", icon: IconMessage, label: "SMS" },
     { key: "contact", icon: IconSendPlane, label: "Contact" },
     { key: "history", icon: IconHistory, label: "History", badge: detail?.messages?.length ? String(detail.messages.length) : null },
   ];
@@ -236,24 +194,6 @@ export function TicketDetailPanel({
     if (!canUpdateStatus || isClosed) return;
     onStatusChange("RESOLVED");
   };
-
-  const handleSendSms = () => {
-    onSendSms(smsPreview, smsTemplateId, smsPhone.trim() || undefined);
-  };
-
-  const renderSmsComposer = (suffix: string) => (
-    <SmsComposer
-      key={suffix}
-      idPrefix={`${fieldIdPrefix}-${suffix}`}
-      smsTemplateId={smsTemplateId}
-      onTemplateChange={setSmsTemplateId}
-      smsPreview={smsPreview}
-      onPreviewChange={setSmsPreview}
-      smsPhone={smsPhone}
-      onPhoneChange={setSmsPhone}
-      onSend={handleSendSms}
-    />
-  );
 
   return (
     <div className="tdp tdp--modal">
@@ -292,8 +232,8 @@ export function TicketDetailPanel({
             <span className="tdp__assigned-chip tdp__assigned-chip--other">Agent: {agentName}</span>
           ) : null}
           {needsAccept ? (
-            <button type="button" className="tdp__accept-btn" disabled={accepting} onClick={onAccept}>
-              <IconUserCheck size={14} />
+            <button type="button" className="tdp__accept-btn tdp__accept-btn--hero" disabled={accepting} onClick={onAccept}>
+              <IconUserCheck size={18} />
               {accepting ? "Accepting…" : "Accept ticket"}
             </button>
           ) : null}
@@ -303,6 +243,22 @@ export function TicketDetailPanel({
           </button>
         </div>
       </header>
+
+      {needsAccept ? (
+        <div className="tdp__accept-strip" role="status">
+          <div className="tdp__accept-strip__text">
+            <IconUserCheck size={20} />
+            <div>
+              <strong>This ticket is unassigned</strong>
+              <p>Accept it to update status, contact the customer, or assign the technical team.</p>
+            </div>
+          </div>
+          <button type="button" className="tdp__accept-btn tdp__accept-btn--hero" disabled={accepting} onClick={onAccept}>
+            <IconUserCheck size={18} />
+            {accepting ? "Accepting…" : "Accept ticket"}
+          </button>
+        </div>
+      ) : null}
 
       <nav className="tdp__nav" role="tablist" aria-label="Ticket detail tabs">
         {tabs.map(({ key, icon: Icon, label, badge }) => (
@@ -407,8 +363,8 @@ export function TicketDetailPanel({
                   <strong>Accept this ticket to update status</strong>
                   <p>Click Accept to assign this ticket to yourself before changing status.</p>
                 </div>
-                <button type="button" className="tdp__accept-btn" disabled={accepting} onClick={onAccept}>
-                  {accepting ? "Accepting…" : "Accept"}
+                <button type="button" className="tdp__accept-btn tdp__accept-btn--hero" disabled={accepting} onClick={onAccept}>
+                  {accepting ? "Accepting…" : "Accept ticket"}
                 </button>
               </div>
             ) : null}
@@ -453,28 +409,37 @@ export function TicketDetailPanel({
 
         {activeTab === "technical" && (
           <div className="tdp__tab-section" role="tabpanel" id={`${fieldIdPrefix}-panel-technical`} aria-labelledby={`${fieldIdPrefix}-tab-technical`}>
-            <div className="tdp__tab-section-head">
-              <h3>Assign team</h3>
-              <p>Escalate tickets that need specialist attention.</p>
-            </div>
-            <div className="tdp__assign-banner tdp__assign-banner--locked">
-              <IconWrench size={16} />
-              <div>
-                <strong>Escalation via status</strong>
-                <div className="tdp__escalate-hint">
-                  To escalate, go to the{" "}
-                  <button type="button" className="tdp__warn-link" onClick={() => setActiveTab("status")}>Status</button>{" "}
-                  tab and set the ticket to <strong>Escalated</strong>.
-                  Then note the specialist in the ticket description or admin notes.
+            {needsAccept ? (
+              <div className="tdp__assign-banner tdp__assign-banner--accept">
+                <IconUserCheck size={16} />
+                <div>
+                  <strong>Accept this ticket before assigning to the technical team.</strong>
+                  <p>Click Accept to claim this ticket, then pick a specialist below.</p>
+                </div>
+                <button type="button" className="tdp__accept-btn tdp__accept-btn--hero" disabled={accepting} onClick={onAccept}>
+                  {accepting ? "Accepting…" : "Accept ticket"}
+                </button>
+              </div>
+            ) : null}
+            {!canUpdateStatus && !needsAccept ? (
+              <div className="tdp__assign-banner tdp__assign-banner--locked">
+                <IconWrench size={16} />
+                <div>
+                  <strong>Assigned to {agentName || "another agent"}</strong>
+                  <p>Only the assigned agent can escalate this ticket to the technical team.</p>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "sms" && (
-          <div className="tdp__tab-section" role="tabpanel" id={`${fieldIdPrefix}-panel-sms`} aria-labelledby={`${fieldIdPrefix}-tab-sms`}>
-            {renderSmsComposer("sms-tab")}
+            ) : null}
+            <TechnicalEscalationPanel
+              ticket={detail?.ticket || t}
+              locked={needsAccept || !canUpdateStatus}
+              lockedReason={
+                needsAccept
+                  ? "Accept this ticket before assigning to the technical team."
+                  : "Only the assigned agent can escalate this ticket."
+              }
+              onAssigned={onAssigned}
+            />
             {actionStatus ? <p className="admin-action-status">{actionStatus}</p> : null}
           </div>
         )}
@@ -482,26 +447,155 @@ export function TicketDetailPanel({
         {activeTab === "contact" && (
           <div className="tdp__tab-section tdp__tab-section--contact" role="tabpanel" id={`${fieldIdPrefix}-panel-contact`} aria-labelledby={`${fieldIdPrefix}-tab-contact`}>
             <div className="tdp__contact-row">
-              <div className="admin-composer admin-email-composer hs-email-composer">
-                <h4>Send email</h4>
-                <label htmlFor={emailTemplateFieldId}>Template</label>
-                <select id={emailTemplateFieldId} value={emailTemplateId} onChange={(e) => setEmailTemplateId(e.target.value)}>
-                  {SUPPORT_EMAIL_TEMPLATES.map((tpl) => (
-                    <option key={tpl.id} value={tpl.id}>{tpl.label}</option>
-                  ))}
-                </select>
-                <label htmlFor={emailMessageFieldId}>Message</label>
-                <textarea
-                  id={emailMessageFieldId}
-                  rows={8}
-                  value={emailPreview}
-                  onChange={(e) => setEmailPreview(e.target.value)}
-                />
-                <button type="button" className="admin-btn-sm" onClick={() => onSendEmail(emailPreview, emailTemplateId)} disabled={!emailPreview.trim()}>
-                  Send email to {ticketUserEmail(t)}
+              <div className={`hs-email-composer${emailOpen ? " is-expanded" : ""}`}>
+                <button
+                  type="button"
+                  className={`hs-composer-card hs-composer-card--email${emailOpen ? " is-open" : ""}${!hasEmail ? " is-disabled" : ""}`}
+                  onClick={() => hasEmail && setEmailOpen((v) => !v)}
+                  disabled={!hasEmail}
+                  title={hasEmail ? "Send email to customer" : "No customer email on this ticket"}
+                >
+                  <span className="hs-composer-card__icon" aria-hidden>
+                    <IconMail size={22} />
+                  </span>
+                  <span className="hs-composer-card__body">
+                    <span className="hs-composer-card__title">Send email to customer</span>
+                    <span className="hs-composer-card__sub">{hasEmail ? customerEmail : "No email available"}</span>
+                  </span>
+                  <span className="hs-composer-card__arrow" aria-hidden>
+                    {emailOpen ? <IconChevronUp size={18} /> : <IconChevronDown size={18} />}
+                  </span>
                 </button>
+
+                {!hasEmail ? (
+                  <p className="hs-detail-note">Customer email is not available for this ticket.</p>
+                ) : null}
+
+                {emailOpen && hasEmail ? (
+                  <div className="hs-email-form">
+                    <p className="hs-email-form__intro">
+                      Choose a predefined template or write your own message. Sent via Brevo to the customer inbox.
+                    </p>
+                    <label className="hs-email-form__label" htmlFor={emailTemplateFieldId}>Predefined template</label>
+                    <select
+                      id={emailTemplateFieldId}
+                      className="hs-email-form__select"
+                      value={emailTemplateId}
+                      onChange={(e) => setEmailTemplateId(e.target.value)}
+                    >
+                      {SUPPORT_EMAIL_TEMPLATES.map((tpl) => (
+                        <option key={tpl.id} value={tpl.id}>{tpl.label}</option>
+                      ))}
+                    </select>
+                    <label className="hs-email-form__label" htmlFor={emailMessageFieldId}>Message</label>
+                    <textarea
+                      id={emailMessageFieldId}
+                      className="hs-email-form__textarea"
+                      rows={8}
+                      value={emailPreview}
+                      onChange={(e) => setEmailPreview(e.target.value)}
+                      placeholder="Write your message to the customer…"
+                    />
+                    <div className="hs-email-form__actions">
+                      <button type="button" className="hs-btn" onClick={() => setEmailOpen(false)}>
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="hs-btn hs-btn--primary"
+                        onClick={() => onSendEmail(emailPreview, emailTemplateId)}
+                        disabled={!emailPreview.trim()}
+                      >
+                        <IconSend size={16} />
+                        Send email
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
-              {renderSmsComposer("contact-tab")}
+
+              <div className={`hs-sms-composer${smsOpen ? " is-expanded" : ""}`}>
+                <button
+                  type="button"
+                  className={`hs-composer-card hs-composer-card--sms${smsOpen ? " is-open" : ""}`}
+                  onClick={() => setSmsOpen((v) => !v)}
+                  title="Send SMS to customer via Twilio"
+                >
+                  <span className="hs-composer-card__icon" aria-hidden>
+                    <IconMessage size={22} />
+                  </span>
+                  <span className="hs-composer-card__body">
+                    <span className="hs-composer-card__title">Send SMS to customer</span>
+                    <span className="hs-composer-card__sub">
+                      {smsPhone.trim() ? smsPhone.trim() : "via Twilio · add phone to send"}
+                    </span>
+                  </span>
+                  <span className="hs-composer-card__arrow" aria-hidden>
+                    {smsOpen ? <IconChevronUp size={18} /> : <IconChevronDown size={18} />}
+                  </span>
+                </button>
+
+                {smsOpen ? (
+                  <div className="hs-email-form hs-sms-form">
+                    <p className="hs-email-form__intro">
+                      Send a short text from your support desk number. Prefer predefined templates for common updates.
+                    </p>
+                    <label className="hs-email-form__label" htmlFor={smsPhoneFieldId}>Customer phone</label>
+                    <div className="hs-email-form__phone-row">
+                      <IconPhone size={16} />
+                      <input
+                        id={smsPhoneFieldId}
+                        type="tel"
+                        className={`hs-email-form__input${smsPhone.trim() ? "" : " hs-email-form__input--missing"}`}
+                        value={smsPhone}
+                        onChange={(e) => setSmsPhone(e.target.value)}
+                        placeholder="e.g. +91 98765 43210"
+                        autoComplete="tel"
+                      />
+                    </div>
+                    <label className="hs-email-form__label" htmlFor={smsTemplateFieldId}>Predefined template</label>
+                    <select
+                      id={smsTemplateFieldId}
+                      className="hs-email-form__select"
+                      value={smsTemplateId}
+                      onChange={(e) => setSmsTemplateId(e.target.value)}
+                    >
+                      {SUPPORT_SMS_TEMPLATES.map((tpl) => (
+                        <option key={tpl.id} value={tpl.id}>{tpl.label}</option>
+                      ))}
+                    </select>
+                    <label className="hs-email-form__label" htmlFor={smsMessageFieldId}>
+                      SMS message
+                      <span className={`hs-sms-char-count${smsPreview.length > 320 ? " is-over" : ""}`}>
+                        {smsPreview.length}/320
+                      </span>
+                    </label>
+                    <textarea
+                      id={smsMessageFieldId}
+                      className="hs-email-form__textarea hs-sms-form__textarea"
+                      rows={4}
+                      maxLength={320}
+                      value={smsPreview}
+                      onChange={(e) => setSmsPreview(e.target.value)}
+                      placeholder="Choose a template or type your SMS…"
+                    />
+                    <div className="hs-email-form__actions">
+                      <button type="button" className="hs-btn" onClick={() => setSmsOpen(false)}>
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="hs-btn hs-btn--sms-submit"
+                        onClick={() => onSendSms(smsPreview, smsTemplateId, smsPhone.trim() || undefined)}
+                        disabled={!canSendSms}
+                      >
+                        <IconSend size={16} />
+                        Send SMS
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
             {actionStatus ? <p className="admin-action-status">{actionStatus}</p> : null}
           </div>

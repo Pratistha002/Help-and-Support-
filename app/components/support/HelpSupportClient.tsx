@@ -1215,7 +1215,7 @@ export function HelpSupportClient() {
 
       {!aiPanelOpen ? (
         <div className="sx-help-faq-footer-band">
-          <div className="sx-help-ai-cta sx-help-ai-cta--fullscreen">
+          <div className="sx-help-ai-cta">
             <div className="sx-help-ai-cta__inner">
               <div className="sx-help-ai-cta__text">
                 <strong>Couldn&apos;t find what you need?</strong>

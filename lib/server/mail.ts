@@ -1,5 +1,11 @@
 import nodemailer from "nodemailer";
-import { isBrevoApiConfigured, isMailConfigured, isSmtpConfigured, serverEnv } from "./env";
+import {
+  isBrevoApiConfigured,
+  isGmailSmtpConfigured,
+  isMailConfigured,
+  isSmtpConfigured,
+  serverEnv,
+} from "./env";
 
 let transporter: nodemailer.Transporter | null = null;
 let transporterSig = "";
@@ -9,7 +15,8 @@ function transportSignature() {
 }
 
 function getTransporter() {
-  if (!isMailConfigured()) return null;
+  if (!isSmtpConfigured() && !isBrevoApiConfigured()) return null;
+  if (!serverEnv.mailUser || !serverEnv.mailPass) return null;
 
   const sig = transportSignature();
   if (transporter && transporterSig === sig) return transporter;
@@ -31,6 +38,25 @@ function getTransporter() {
   });
   transporterSig = sig;
   return transporter;
+}
+
+function isBrevoIpBlockedError(msg: string): boolean {
+  return /unrecognised ip|unrecognized ip|ip not authorized|authorised_ips|authorized_ips/i.test(
+    msg,
+  );
+}
+
+function formatBrevoApiError(msg: string): string {
+  if (isBrevoIpBlockedError(msg)) {
+    const ipMatch = msg.match(/\b(\d{1,3}(?:\.\d{1,3}){3})\b/);
+    const ip = ipMatch?.[1] || "your server IP";
+    return (
+      `Brevo blocked this server IP (${ip}). ` +
+      `Add it under Brevo → Security → Authorised IPs: https://app.brevo.com/security/authorised_ips ` +
+      `(or deactivate IP blocking for API keys while developing).`
+    );
+  }
+  return msg;
 }
 
 export type SendMailInput = {
@@ -101,9 +127,41 @@ async function sendViaSmtp(input: SendMailInput): Promise<string | null> {
   } catch (e: any) {
     const msg = e?.message || "SMTP send failed";
     if (serverEnv.mailProvider === "brevo" && /auth|535|invalid|login/i.test(msg)) {
-      return `${msg} — regenerate SMTP key in Brevo or use BREVO_API_KEY instead`;
+      return `${msg} — regenerate SMTP key in Brevo (SMTP & API), confirm login email matches Brevo SMTP login, and authorize this IP for SMTP`;
     }
     return msg;
+  }
+}
+
+/** Last resort: send via Gmail SMTP using app password (same mailbox as APP_MAIL_FROM). */
+async function sendViaGmailSmtp(input: SendMailInput): Promise<string | null> {
+  if (!isGmailSmtpConfigured()) {
+    return "Gmail SMTP fallback is not configured (set SUPPORT_IMAP_PASSWORD or GMAIL_APP_PASSWORD)";
+  }
+
+  try {
+    const transport = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      auth: {
+        user: serverEnv.gmailSmtpUser,
+        pass: serverEnv.gmailSmtpPass,
+      },
+      tls: { minVersion: "TLSv1.2" as const },
+    });
+
+    await transport.sendMail({
+      from: `"${serverEnv.companyName} Support" <${serverEnv.mailFrom}>`,
+      to: input.to.trim(),
+      subject: input.subject,
+      text: input.text,
+      replyTo: input.replyTo?.trim() || undefined,
+    });
+    return null;
+  } catch (e: any) {
+    return e?.message || "Gmail SMTP send failed";
   }
 }
 
@@ -111,18 +169,29 @@ async function sendViaSmtp(input: SendMailInput): Promise<string | null> {
 export async function sendPlainTextMail(input: SendMailInput): Promise<string | null> {
   if (!isMailConfigured()) return mailNotConfiguredMessage();
 
+  const errors: string[] = [];
+
   if (isBrevoApiConfigured()) {
     const apiErr = await sendViaBrevoApi(input);
     if (!apiErr) return null;
-    if (isSmtpConfigured()) {
-      const smtpErr = await sendViaSmtp(input);
-      if (!smtpErr) return null;
-      return `${apiErr} (SMTP fallback also failed: ${smtpErr})`;
-    }
-    return apiErr;
+    errors.push(formatBrevoApiError(apiErr));
   }
 
-  return sendViaSmtp(input);
+  if (isSmtpConfigured()) {
+    const smtpErr = await sendViaSmtp(input);
+    if (!smtpErr) return null;
+    errors.push(smtpErr);
+  }
+
+  // When Brevo blocks the server IP (common on home/office networks), fall back to Gmail.
+  if (isGmailSmtpConfigured()) {
+    const gmailErr = await sendViaGmailSmtp(input);
+    if (!gmailErr) return null;
+    errors.push(`Gmail fallback: ${gmailErr}`);
+  }
+
+  if (!errors.length) return mailNotConfiguredMessage();
+  return errors.join(" | ");
 }
 
 export async function sendTicketAckToCustomer(opts: {

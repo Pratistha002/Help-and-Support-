@@ -141,6 +141,42 @@ export const supportApi = {
     supportFetch(`/api/support/admin/technical-team/${id}/`, { method: "PUT", body: JSON.stringify(payload) }),
   adminDeleteTechnicalMember: (id: string) =>
     supportFetch(`/api/support/admin/technical-team/${id}/`, { method: "DELETE" }),
+  adminTechnicalTeamTemplate: async () => {
+    const { token } = getAuthFromStorage();
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch("/api/support/admin/technical-team/template/", { headers });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.message || err?.error || `Request failed (${res.status})`);
+    }
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "technical_team_template.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+  adminImportTechnicalTeam: async (file: File) => {
+    const { token } = getAuthFromStorage();
+    const form = new FormData();
+    form.append("file", file);
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch("/api/support/admin/technical-team/import/", {
+      method: "POST",
+      headers,
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.message || err?.error || `Request failed (${res.status})`);
+    }
+    return res.json();
+  },
   adminEscalateToTechnical: (ticketId: string, payload: { technicalMemberId: string; note?: string }) =>
     supportFetch(`/api/support/admin/tickets/${ticketId}/escalate/`, {
       method: "POST",

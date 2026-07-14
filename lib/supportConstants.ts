@@ -7,7 +7,7 @@ export const CONSUMER_TYPES = [
   { id: "ADMIN", label: "Admin", description: "Platform & org settings" },
 ];
 
-export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "saarthix.help@gmail.com";
+export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "Saarthiworkforce@gmail.com";
 export const SUPPORT_PHONE_DISPLAY = process.env.NEXT_PUBLIC_SUPPORT_PHONE_DISPLAY || "+1 878 732 2485";
 export const SUPPORT_PHONE_E164 = process.env.NEXT_PUBLIC_SUPPORT_PHONE_E164 || "+18787322485";
 export const SUPPORT_PHONE_TEL = `tel:${SUPPORT_PHONE_E164.replace(/\s/g, "")}`;

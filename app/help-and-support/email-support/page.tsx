@@ -3,17 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { appPath } from "@/lib/apiBase";
-import { getAuthFromStorage } from "@/lib/auth";
+import { getAuthFromStorage, type GuestUser } from "@/lib/auth";
 import { supportApi } from "@/lib/supportApi";
 import { SUPPORT_EMAIL, resolveConsumerType } from "@/lib/supportConstants";
 import "../../components/support/help.css";
 
 export default function EmailSupportPage() {
-  const { user } = getAuthFromStorage();
+  const [user, setUser] = useState<GuestUser | null>(null);
   const [supportEmail, setSupportEmail] = useState(SUPPORT_EMAIL);
   const [form, setForm] = useState({
-    name: user?.fullName || "",
-    email: user?.email || "",
+    name: "",
+    email: "",
     phone: "",
     subject: "",
     message: "",
@@ -23,9 +23,21 @@ export default function EmailSupportPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    supportApi.getSupportConfig().then((c) => {
-      if (c?.supportEmail) setSupportEmail(c.supportEmail);
-    }).catch(() => null);
+    const { user: stored } = getAuthFromStorage();
+    setUser(stored);
+    if (stored) {
+      setForm((f) => ({
+        ...f,
+        name: f.name || stored.fullName || "",
+        email: f.email || stored.email || "",
+      }));
+    }
+    supportApi
+      .getSupportConfig()
+      .then((c) => {
+        if (c?.supportEmail) setSupportEmail(c.supportEmail);
+      })
+      .catch(() => null);
   }, []);
 
   const submit = async (e: React.FormEvent) => {

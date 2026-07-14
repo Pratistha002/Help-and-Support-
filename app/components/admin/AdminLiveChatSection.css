@@ -608,13 +608,13 @@ html.hs-admin-live-chat-lock footer {
   gap: 0.25rem;
   margin-top: 0.3rem;
   font-size: 0.65rem;
-  color: #6366f1;
+  color: #3170a5;
   line-height: 1.35;
 }
 
 .hs-live-chat__ai-insight {
   padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, #f5f3ff, #eff6ff);
+  background: linear-gradient(135deg, #eef4fa, #f0f7fc);
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -654,7 +654,7 @@ html.hs-admin-live-chat-lock footer {
   background: transparent;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #4338ca;
+  color: #1e3a5f;
   cursor: pointer;
   text-align: left;
   padding: 0;
@@ -678,14 +678,14 @@ html.hs-admin-live-chat-lock footer {
   align-items: center;
   gap: 0.4rem;
   padding: 0.45rem 0.85rem;
-  border: 1.5px solid #2563eb;
+  border: 1.5px solid #3170a5;
   border-radius: 999px;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #3170a5 0%, #1e3a5f 100%);
   color: #fff;
   font-weight: 700;
   font-size: 0.75rem;
   line-height: 1.2;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 4px 14px rgba(30, 58, 95, 0.28);
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
@@ -694,18 +694,18 @@ html.hs-admin-live-chat-lock footer {
 .hs-live-chat__toolbar-actions .hs-btn.hs-btn--token:hover,
 .hs-btn.hs-btn--token:hover,
 .hs-btn.hs-btn--sm.hs-btn--token:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-  border-color: #1e40af;
+  background: linear-gradient(135deg, #2c4f72 0%, #1e3a5f 100%);
+  border-color: #1e3a5f;
   color: #fff;
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.42);
+  box-shadow: 0 6px 18px rgba(30, 58, 95, 0.36);
   transform: translateY(-1px);
 }
 
 .hs-live-chat__toolbar-actions .hs-btn.hs-btn--token.is-open,
 .hs-btn.hs-btn--token.is-open,
 .hs-btn.hs-btn--sm.hs-btn--token.is-open {
-  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-  border-color: #1e3a8a;
+  background: linear-gradient(135deg, #1e3a5f 0%, #152a45 100%);
+  border-color: #152a45;
   color: #fff;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.12);
   transform: none;
@@ -741,7 +741,7 @@ html.hs-admin-live-chat-lock footer {
   margin-left: auto;
   border: none;
   background: transparent;
-  color: #6366f1;
+  color: #3170a5;
   cursor: pointer;
   padding: 0.2rem;
   display: flex;
@@ -773,8 +773,8 @@ html.hs-admin-live-chat-lock footer {
   text-transform: uppercase;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
-  background: #e0e7ff;
-  color: #3730a3;
+  background: #dbeafe;
+  color: #1e3a5f;
 }
 
 .hs-live-chat__ai-tag--frustrated,

@@ -14,7 +14,7 @@ import {
   orgUpdateRecommendationStatus,
   type RoleRecommendation,
 } from "@/lib/orgNavbar";
-import { clearAllSupportAuth, resolveSupportAuth } from "@/lib/resolveSupportAuth";
+import { clearAllSupportAuth, resolveSupportAuth, type SupportAuth } from "@/lib/resolveSupportAuth";
 import { HelpAdminLoginModal } from "./HelpAdminLoginModal";
 import "./NavBar.css";
 
@@ -23,7 +23,7 @@ const NOTIF_POLL_MS = 30_000;
 export function NavBar() {
   const pathname = usePathname();
 
-  const [auth, setAuth] = useState(() => resolveSupportAuth());
+  const [auth, setAuth] = useState<SupportAuth>({ token: "", user: null, source: null });
   const [mounted, setMounted] = useState(false);
   const [authMenuOpen, setAuthMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);

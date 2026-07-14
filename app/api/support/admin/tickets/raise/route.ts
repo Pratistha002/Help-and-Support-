@@ -22,10 +22,11 @@ export async function POST(req: NextRequest) {
     if (!subject || !description) return errorResponse("Subject and description are required");
 
     const liveChatSessionId = body.liveChatSessionId ? String(body.liveChatSessionId) : undefined;
+    if (!liveChatSessionId) {
+      return errorResponse("liveChatSessionId is required — raise call tickets from Call Management instead");
+    }
 
-    const tags = liveChatSessionId
-      ? [LIVE_CHAT_RAISE_TICKET_TAG, ADMIN_AGENT_RAISED_TAG]
-      : [ADMIN_AGENT_RAISED_TAG];
+    const tags = [LIVE_CHAT_RAISE_TICKET_TAG, ADMIN_AGENT_RAISED_TAG];
 
     const ticket = await createTicket({
       email,
@@ -35,16 +36,20 @@ export async function POST(req: NextRequest) {
       category: body.category || "General",
       consumerType: body.consumerType || "EMPLOYEE",
       userId: body.userId,
-      channel: liveChatSessionId ? "LIVE_CHAT" : "ADMIN_RAISED",
+      channel: "LIVE_CHAT",
       liveChatSessionId,
       phone: body.phone ? String(body.phone).trim() : undefined,
       tags,
     });
 
-    await notifyNewTicketSubmission({
-      ...ticket,
-      channel: liveChatSessionId ? "LIVE_CHAT" : "ADMIN_RAISED",
-    });
+    try {
+      await notifyNewTicketSubmission({
+        ...ticket,
+        channel: "LIVE_CHAT",
+      });
+    } catch {
+      // Ticket already created.
+    }
 
     return json(ticket);
   } catch (e: any) {

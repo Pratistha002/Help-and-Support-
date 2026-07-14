@@ -21,11 +21,13 @@ import { AgentSoftphonePanel } from "./AgentSoftphonePanel";
 import { CallCustomerBackPanel } from "./CallCustomerBackPanel";
 import { CallbackQueueRow } from "./CallbackQueueRow";
 import { CallManagementNav } from "./CallManagementNav";
+import { SubmissionTicketsModule } from "./SubmissionTicketsModule";
 import { IconAlertCircle, IconChart, IconListOrdered, IconPhone, IconTicket } from "./AdminIcons";
 import "./call-management.css";
 import "./manage-email.css";
 
 type CustomerHistoryData = { callbacks: any[]; tickets: any[] };
+type AgentUser = { id: string; email: string; fullName: string } | null;
 
 const ACTIVE_TICKET_STATUSES = ["OPEN", "IN_PROGRESS", "PENDING", "PENDING_WITH_USER", "ESCALATED"];
 
@@ -272,7 +274,7 @@ function CallbackDetailSheet({
   onClose: () => void;
   onUpdateCallbackStatus: (s: string) => void;
   onInitiateCall: () => void;
-  onOpenCallCreateTicket: (force: boolean) => void;
+  onOpenCallCreateTicket: () => void;
   onSelectCallback: (c: any) => void;
   onOpenCustomerTicket: (t: any) => void;
   onSendCustomerEmail: () => void;
@@ -368,7 +370,7 @@ function CallbackDetailSheet({
                       ? softphoneState === "live" ? "On call…" : "Calling…"
                       : useSoftphone ? "Call back (browser)" : "Call back (phone)"}
                   </button>
-                  <button type="button" className="admin-btn-sm admin-btn-create-ticket" onClick={() => onOpenCallCreateTicket(Boolean(selected.ticketId))}>
+                  <button type="button" className="admin-btn-sm admin-btn-create-ticket" onClick={() => onOpenCallCreateTicket()}>
                     {selected.ticketId ? "Create another ticket" : "Create ticket"}
                   </button>
                 </div>
@@ -430,7 +432,7 @@ function CallbackDetailSheet({
   return createPortal(modal, document.body);
 }
 
-export function CallManagementModule() {
+export function CallManagementModule({ agentUser = null }: { agentUser?: AgentUser }) {
   const [callbacks, setCallbacks] = useState<any[]>([]);
   const [selected, setSelected] = useState<any>(null);
   const [ticketDetail, setTicketDetail] = useState<any>(null);
@@ -442,7 +444,7 @@ export function CallManagementModule() {
   const [actionStatus, setActionStatus] = useState("");
   const [calling, setCalling] = useState(false);
   const [showRaiseTicket, setShowRaiseTicket] = useState(false);
-  const [raiseForceNew, setRaiseForceNew] = useState(false);
+  const [raiseCallbackId, setRaiseCallbackId] = useState<string | null>(null);
   const [raisingTicket, setRaisingTicket] = useState(false);
   const [raiseForm, setRaiseForm] = useState({ subject: "", description: "", category: "Call", email: "", name: "", phone: "" });
   const [emailTemplateId, setEmailTemplateId] = useState(SUPPORT_EMAIL_TEMPLATES[0]?.id || "");
@@ -458,7 +460,6 @@ export function CallManagementModule() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCallSetup, setShowCallSetup] = useState(false);
   const [callBackLoadingId, setCallBackLoadingId] = useState<string | null>(null);
-  const [callFormOpen, setCallFormOpen] = useState(false);
   const [detailTab, setDetailTab] = useState<"overview" | "contact" | "ticket">("overview");
   const [callTickets, setCallTickets] = useState<any[]>([]);
   const [viewTickets, setViewTickets] = useState(false);
@@ -614,20 +615,87 @@ export function CallManagementModule() {
 
   const handleCallbackUpdate = async (
     id: string,
-    payload: { status?: string; markResolved?: boolean; markNotConnected?: boolean; markPending?: boolean },
+    payload: {
+      status?: string;
+      markResolved?: boolean;
+      markNotConnected?: boolean;
+      markPending?: boolean;
+      markConnected?: boolean;
+    },
   ) => {
     let status = payload.status;
+    if (payload.markConnected) status = "CONNECTED";
     if (payload.markResolved) status = "RESOLVED";
     if (payload.markNotConnected) status = "NOT_CONNECTED";
     if (payload.markPending) status = "PENDING";
     if (!status) return null;
-    await supportApi.adminUpdateCallback(id, status);
-    await load();
-    if (selected && String(selected._id) === String(id)) {
-      const fresh = (await supportApi.adminCallbacks()).find((c: any) => String(c._id) === String(id));
-      if (fresh) setSelected(fresh);
+    try {
+      await supportApi.adminUpdateCallback(id, status);
+      setActionStatus(`Status updated to ${status.replace(/_/g, " ").toLowerCase()}.`);
+      await load();
+      if (selected && String(selected._id) === String(id)) {
+        const fresh = (await supportApi.adminCallbacks()).find((c: any) => String(c._id) === String(id));
+        if (fresh) setSelected(fresh);
+      }
+      return { item: { id, status } };
+    } catch (e: any) {
+      setActionStatus(e?.message || "Failed to update status");
+      return null;
     }
-    return { item: { id, status } };
+  };
+
+  const selectQueueRow = (id: string) => {
+    const c = callbacks.find((x) => String(x._id) === String(id));
+    if (c) void selectCallback(c);
+  };
+
+  const openRaiseTicketForCallback = (id: string) => {
+    const c = callbacks.find((x) => String(x._id) === String(id));
+    if (!c) {
+      setActionStatus("Call request not found.");
+      return;
+    }
+    void selectCallback(c).then(() => {
+      setRaiseCallbackId(String(c._id));
+      setRaiseForm({
+        subject: `Callback: ${c.callerName || "Customer"}`,
+        description: `Callback request from ${c.callerName || "customer"} (${c.phone || "n/a"}).\nQueue position: #${c.queuePosition ?? "—"}.`,
+        category: "Call",
+        email: c.callerEmail || "",
+        name: c.callerName || "",
+        phone: c.phone || "",
+      });
+      setShowRaiseTicket(true);
+    });
+  };
+
+  const openCallCreateTicket = () => {
+    if (selected) {
+      setRaiseCallbackId(String(selected._id));
+      setRaiseForm({
+        subject: `Callback: ${selected.callerName || "Customer"}`,
+        description: `Callback request from ${selected.callerName || "customer"} (${selected.phone || "n/a"}).\nQueue position: #${selected.queuePosition ?? "—"}.`,
+        category: "Call",
+        email: selected.callerEmail || "",
+        name: selected.callerName || "",
+        phone: selected.phone || "",
+      });
+    } else {
+      setRaiseCallbackId(null);
+      setRaiseForm({
+        subject: "",
+        description: "",
+        category: "Call",
+        email: "",
+        name: "",
+        phone: "",
+      });
+    }
+    setShowRaiseTicket(true);
+  };
+
+  const handleNavRaiseTicket = () => {
+    openCallCreateTicket();
   };
 
   const onSoftphoneCallEnded = useCallback(async () => {
@@ -664,39 +732,50 @@ export function CallManagementModule() {
     setSmsPreview(smsTpl ? renderTemplate(smsTpl.body, vars) : "");
   }, [selected, ticketDetail, emailTemplateId, smsTemplateId]);
 
-  const openCallCreateTicket = (forceNew = false) => {
-    if (!selected) {
-      setActionStatus("Select a callback request first, then create a ticket.");
-      document.getElementById("hs-call-log-ticket")?.scrollIntoView({ behavior: "smooth" });
-      return;
-    }
-    setRaiseForceNew(forceNew);
-    setRaiseForm({
-      subject: `Callback: ${selected.callerName}`,
-      description: `Callback request from ${selected.callerName} (${selected.phone}).\nQueue position: #${selected.queuePosition}.`,
-      category: "Call",
-      email: selected.callerEmail || "",
-      name: selected.callerName || "",
-      phone: selected.phone || "",
-    });
-    setShowRaiseTicket(true);
-  };
-
   const submitRaiseTicket = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selected || raisingTicket) return;
+    if (raisingTicket) return;
+
+    const name = raiseForm.name.trim();
+    const phone = raiseForm.phone.trim();
+    const email = raiseForm.email.trim();
+    const subject = raiseForm.subject.trim();
+    const description = raiseForm.description.trim();
+    if (!name || !phone || !email || !subject || !description) {
+      setActionStatus("Please fill name, phone, email, subject, and description.");
+      return;
+    }
+
     setRaisingTicket(true);
+    const linkedCallbackId = raiseCallbackId;
     try {
-      const r = await supportApi.adminRaiseCallTicket({ callbackId: String(selected._id), forceNew: raiseForceNew, ...raiseForm });
+      const payload: Record<string, unknown> = {
+        forceNew: true,
+        name,
+        phone,
+        email,
+        subject,
+        description,
+        category: raiseForm.category || "Call",
+      };
+      if (linkedCallbackId) payload.callbackId = linkedCallbackId;
+
+      const r = await supportApi.adminRaiseCallTicket(payload);
+      const ticket = r.ticket || r;
+      const ticketNumber = ticket?.ticketNumber || "—";
+      const ticketId = ticket?._id || ticket?.id;
+
       setShowRaiseTicket(false);
-      setRaiseForceNew(false);
+      setRaiseCallbackId(null);
       setRaiseForm({ subject: "", description: "", category: "Call", email: "", name: "", phone: "" });
-      setActionStatus(r.reused ? `Ticket ${r.ticket.ticketNumber} is already linked.` : `New ticket ${r.ticket.ticketNumber} created.`);
+      setActionStatus(`Ticket ${ticketNumber} created.`);
       setDetailTab("ticket");
-      await loadTicketDetail(String(r.ticket._id));
-      await refreshSelected();
-    } catch (e: any) {
-      setActionStatus(e?.message || "Failed to raise ticket");
+      if (ticketId) await loadTicketDetail(String(ticketId));
+      await load();
+      if (linkedCallbackId) await refreshSelected();
+      setViewTickets(true);
+    } catch (err: any) {
+      setActionStatus(err?.message || "Failed to raise ticket");
     } finally {
       setRaisingTicket(false);
     }
@@ -809,33 +888,17 @@ export function CallManagementModule() {
 
   if (viewTickets) {
     return (
-      <div className="hs-panel hs-panel--full">
-        <div className="hs-panel__head hs-panel__head--spread" style={{ padding: "1rem 1.15rem", background: "#fff", borderRadius: "12px", marginBottom: "1rem" }}>
+      <div className="hs-call-tickets-view">
+        <div className="hs-call-tickets-view__bar">
           <div>
-            <h2 style={{ margin: 0 }}>Call tickets</h2>
-            <p className="admin-subtitle">Tickets created from call management</p>
+            <h2>Call tickets</h2>
+            <p>Tickets created from Call Management — accept, view, and follow up like other support tickets.</p>
           </div>
-          <button type="button" className="hs-btn hs-btn--ghost" onClick={() => setViewTickets(false)}>← Back to dashboard</button>
+          <button type="button" className="hs-btn hs-btn--ghost" onClick={() => setViewTickets(false)}>
+            ← Back to call dashboard
+          </button>
         </div>
-        <div className="hs-submissions-table-wrap" style={{ background: "#fff", borderRadius: "12px", padding: "0.5rem" }}>
-          <table className="hs-submissions-table">
-            <thead>
-              <tr>{["Ticket", "User", "Subject", "Status", "Created"].map((h) => <th key={h}>{h}</th>)}</tr>
-            </thead>
-            <tbody>
-              {callTickets.map((t) => (
-                <tr key={String(t._id || t.id)}>
-                  <td><span className="hs-sub-ticket-id">{t.ticketNumber}</span></td>
-                  <td>{t.name || t.userName || "—"}</td>
-                  <td>{t.subject}</td>
-                  <td>{statusLabel(t.status)}</td>
-                  <td>{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!callTickets.length && <p className="hs-call-dashboard__empty">No call tickets yet.</p>}
-        </div>
+        <SubmissionTicketsModule variant="call" agentUser={agentUser} />
       </div>
     );
   }
@@ -848,33 +911,13 @@ export function CallManagementModule() {
         callTicketsOpen={stats.callTicketsOpen}
         onRefresh={() => void load()}
         onViewTickets={() => setViewTickets(true)}
-        onRaiseTicket={() => setCallFormOpen((v) => !v)}
-        raiseTicketOpen={callFormOpen}
+        onRaiseTicket={handleNavRaiseTicket}
+        raiseTicketOpen={showRaiseTicket}
         refreshing={loading}
       />
 
       <div id="hs-call-log-ticket" className="hs-call-mgmt__raise-bar">
-        {callFormOpen && (
-          <div className="hs-call-form-wrap">
-            <div className="hs-call-form-wrap__head">
-              <h3>Log inbound call ticket</h3>
-              <p>Select a callback from the queue or create a ticket from the selected request.</p>
-            </div>
-            <button
-              type="button"
-              className="hs-btn hs-btn--primary"
-              onClick={() => openCallCreateTicket(false)}
-              disabled={!selected}
-            >
-              Log ticket from selected callback
-            </button>
-            {!selected && (
-              <p className="admin-hint" style={{ marginTop: "0.75rem" }}>
-                Pick a row from the call queue first, or place a call before logging a ticket.
-              </p>
-            )}
-          </div>
-        )}
+        {actionStatus ? <p className="hs-call-mgmt__action-status" role="status">{actionStatus}</p> : null}
       </div>
 
       <div className="hs-call-mgmt__layout">
@@ -975,9 +1018,12 @@ export function CallManagementModule() {
                               phone: c.phone,
                               status: c.status,
                             }}
+                            selected={selected ? String(selected._id) === String(c._id) : false}
                             agentOnline={agentOnlineForNav}
                             callBackLoadingId={callBackLoadingId}
+                            onSelect={selectQueueRow}
                             onQueueDial={(id) => void handleQueueDial(id)}
+                            onRaiseTicket={openRaiseTicketForCallback}
                             onUpdate={handleCallbackUpdate}
                           />
                         ))}
@@ -1110,21 +1156,86 @@ export function CallManagementModule() {
       ) : null}
 
       {showRaiseTicket ? (
-        <div className="sx-help-modal-backdrop">
-          <form className="sx-help-modal sx-help-email-form" onSubmit={submitRaiseTicket}>
-            <h3>Create ticket</h3>
-            <p className="admin-hint">{raiseForceNew ? "Creates an additional ticket for this callback." : "One ticket per callback — existing ticket will be reused if present."}</p>
-            <input required type="email" placeholder="Customer email" value={raiseForm.email} onChange={(e) => setRaiseForm((f) => ({ ...f, email: e.target.value }))} />
-            <input required placeholder="Customer name" value={raiseForm.name} onChange={(e) => setRaiseForm((f) => ({ ...f, name: e.target.value }))} />
-            <input required type="tel" placeholder="Customer phone" value={raiseForm.phone} onChange={(e) => setRaiseForm((f) => ({ ...f, phone: e.target.value }))} />
-            <input required placeholder="Subject" value={raiseForm.subject} onChange={(e) => setRaiseForm((f) => ({ ...f, subject: e.target.value }))} />
-            <select value={raiseForm.category} onChange={(e) => setRaiseForm((f) => ({ ...f, category: e.target.value }))}>
-              {["Call", "General", "Account & Login", "Technical Support"].map((c) => <option key={c}>{c}</option>)}
-            </select>
-            <textarea required placeholder="Description / call notes" rows={4} value={raiseForm.description} onChange={(e) => setRaiseForm((f) => ({ ...f, description: e.target.value }))} />
-            <div className="sx-help-modal-actions">
-              <button type="submit" className="primary" disabled={raisingTicket}>{raisingTicket ? "Creating…" : "Create ticket"}</button>
-              <button type="button" onClick={() => { setShowRaiseTicket(false); setRaiseForceNew(false); }} disabled={raisingTicket}>Cancel</button>
+        <div className="sx-help-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="hs-raise-ticket-title">
+          <form className="sx-help-modal sx-help-email-form hs-call-raise-ticket-form" onSubmit={submitRaiseTicket}>
+            <div className="hs-call-raise-ticket-form__scroll">
+              <h3 id="hs-raise-ticket-title">Create support ticket</h3>
+              <p className="admin-hint">
+                {raiseCallbackId
+                  ? "Prefilled from the selected call request. Submit to create a new call ticket."
+                  : "Enter customer name, phone, email, subject, and description to create a call ticket."}
+              </p>
+              <label className="hs-call-raise-ticket-form__label">
+                Customer email
+                <input
+                  required
+                  type="email"
+                  placeholder="customer@example.com"
+                  value={raiseForm.email}
+                  onChange={(e) => setRaiseForm((f) => ({ ...f, email: e.target.value }))}
+                />
+              </label>
+              <label className="hs-call-raise-ticket-form__label">
+                Customer name
+                <input
+                  required
+                  placeholder="Full name"
+                  value={raiseForm.name}
+                  onChange={(e) => setRaiseForm((f) => ({ ...f, name: e.target.value }))}
+                />
+              </label>
+              <label className="hs-call-raise-ticket-form__label">
+                Customer phone
+                <input
+                  required
+                  type="tel"
+                  placeholder="+91…"
+                  value={raiseForm.phone}
+                  onChange={(e) => setRaiseForm((f) => ({ ...f, phone: e.target.value }))}
+                />
+              </label>
+              <label className="hs-call-raise-ticket-form__label">
+                Subject
+                <input
+                  required
+                  placeholder="Ticket subject"
+                  value={raiseForm.subject}
+                  onChange={(e) => setRaiseForm((f) => ({ ...f, subject: e.target.value }))}
+                />
+              </label>
+              <label className="hs-call-raise-ticket-form__label">
+                Category
+                <select value={raiseForm.category} onChange={(e) => setRaiseForm((f) => ({ ...f, category: e.target.value }))}>
+                  {["Call", "General", "Account & Login", "Technical Support"].map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="hs-call-raise-ticket-form__label">
+                Description / call notes
+                <textarea
+                  required
+                  placeholder="What was discussed and what follow-up is needed…"
+                  rows={4}
+                  value={raiseForm.description}
+                  onChange={(e) => setRaiseForm((f) => ({ ...f, description: e.target.value }))}
+                />
+              </label>
+            </div>
+            <div className="sx-help-modal-actions hs-call-raise-ticket-form__actions">
+              <button type="submit" className="primary" disabled={raisingTicket}>
+                {raisingTicket ? "Creating…" : "Create ticket"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRaiseTicket(false);
+                  setRaiseCallbackId(null);
+                }}
+                disabled={raisingTicket}
+              >
+                Cancel
+              </button>
             </div>
           </form>
         </div>

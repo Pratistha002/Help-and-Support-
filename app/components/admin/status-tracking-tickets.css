@@ -250,9 +250,9 @@
 }
 
 .hs-sub-channel--ticket_form {
-  color: #4338ca;
-  background: rgba(99, 102, 241, 0.1);
-  border-color: rgba(99, 102, 241, 0.2);
+  color: #1e3a5f;
+  background: rgba(49, 112, 165, 0.1);
+  border-color: rgba(49, 112, 165, 0.2);
 }
 
 .hs-sub-channel--email {
@@ -269,9 +269,9 @@
 
 .hs-sub-channel--live_chat,
 .hs-sub-channel--ai_chat {
-  color: #7c3aed;
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.2);
+  color: #3170a5;
+  background: rgba(44, 79, 114, 0.1);
+  border-color: rgba(44, 79, 114, 0.2);
 }
 
 .hs-sub-channel--sms,
@@ -310,4 +310,87 @@
     flex: 1;
     justify-content: center;
   }
+}
+
+/* Full data table — spacing + scroll */
+.hs-tracking-panel .hs-table-wrap--full,
+.hs-tracking-panel .hs-submissions-table-wrap {
+  max-height: min(72vh, 680px);
+  overflow: auto;
+  margin: 0.35rem 0.85rem 1rem;
+  border: 1px solid #e8ecf2;
+  border-radius: 12px;
+  background: #fff;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hs-tracking-panel .hs-table--full,
+.hs-tracking-panel .hs-table-wrap--full .hs-submissions-table {
+  min-width: 1480px;
+  width: max-content;
+  max-width: none;
+}
+
+.hs-tracking-panel .hs-table--full thead th,
+.hs-tracking-panel .hs-table-wrap--full .hs-submissions-table thead th {
+  padding: 0.9rem 1.1rem;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #f8fafc;
+  box-shadow: 0 1px 0 #eef2f7;
+}
+
+.hs-tracking-panel .hs-table--full tbody td,
+.hs-tracking-panel .hs-table-wrap--full .hs-submissions-table tbody td {
+  padding: 1.05rem 1.1rem;
+  vertical-align: top;
+}
+
+.hs-tracking-panel .hs-table--full tbody tr + tr td {
+  border-top: 1px solid #f1f5f9;
+}
+
+.hs-tracking-panel .hs-table--full td:nth-child(2),
+.hs-tracking-panel .hs-table--full td:nth-child(3),
+.hs-tracking-panel .hs-table--full td:nth-child(9),
+.hs-tracking-panel .hs-table--full td:nth-child(10) {
+  white-space: normal;
+  max-width: 220px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.hs-tracking-panel .hs-table--full .hs-table__accept,
+.hs-tracking-panel .hs-table--full .hs-table__action {
+  white-space: nowrap;
+  min-width: 9.5rem;
+  vertical-align: middle;
+}
+
+.hs-tracking-panel .hs-table--full .hs-table__action {
+  position: sticky;
+  right: 0;
+  background: #fff;
+  z-index: 1;
+  box-shadow: -6px 0 10px -8px rgba(15, 23, 42, 0.18);
+}
+
+.hs-tracking-panel .hs-table--full tbody tr:hover .hs-table__action {
+  background: #f8fbff;
+}
+
+.hs-tracking-panel .hs-sub-agent--assigned {
+  max-width: 180px;
+  gap: 0.35rem;
+  padding: 0.35rem 0.55rem;
+  white-space: normal;
+}
+
+.hs-tracking-panel .hs-sub-agent__email {
+  display: block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

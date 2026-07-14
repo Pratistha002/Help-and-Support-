@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { supportApi } from "@/lib/supportApi";
 import { CONSUMER_TYPES, SUPPORT_EMAIL } from "@/lib/supportConstants";
 import { TICKET_CHANNELS, TICKET_STATUSES, statusLabel, statusColor } from "@/lib/ticketConstants";
-import { IconCalendar, IconChevronRightSmall, IconDownload, IconFilter, IconForm, IconInbox, IconMail, IconSearch, IconTag, IconTicket, IconUser } from "./AdminIcons";
+import { IconCalendar, IconChevronRightSmall, IconDownload, IconFilter, IconForm, IconInbox, IconMail, IconPhone, IconSearch, IconTag, IconTicket, IconUser } from "./AdminIcons";
 import { ClientDateTime } from "./ClientDateTime";
 import { TicketDetailPanel } from "./TicketDetailPanel";
 import "./manage-email.css";
@@ -14,7 +14,7 @@ import "./ticket-detail.css";
 const ACTIVE_QUEUE_STATUSES = ["OPEN", "IN_PROGRESS", "PENDING", "PENDING_WITH_USER", "ESCALATED"];
 const TERMINAL_STATUSES = ["RESOLVED", "CLOSED"];
 
-export type SubmissionVariant = "email" | "form" | "agent-raised";
+export type SubmissionVariant = "email" | "form" | "agent-raised" | "call";
 type AgentUser = { id: string; email: string; fullName: string } | null;
 
 function ticketId(t: any): string {
@@ -188,6 +188,7 @@ function TicketDetailModal({
   onNotifyEmailChange,
   onNotifySmsChange,
   showEmailChannel,
+  onAssigned,
 }: {
   open: boolean;
   ticket: any;
@@ -206,6 +207,7 @@ function TicketDetailModal({
   onNotifyEmailChange: (v: boolean) => void;
   onNotifySmsChange: (v: boolean) => void;
   showEmailChannel?: boolean;
+  onAssigned?: (data: any) => void;
 }) {
   const [portalReady, setPortalReady] = useState(false);
 
@@ -248,6 +250,7 @@ function TicketDetailModal({
           onNotifyEmailChange={onNotifyEmailChange}
           onNotifySmsChange={onNotifySmsChange}
           showEmailChannel={showEmailChannel}
+          onAssigned={onAssigned}
         />
       </div>
     </div>
@@ -298,6 +301,17 @@ const VARIANT_CONFIG: Record<SubmissionVariant, {
     defaultCategory: "General",
     heroIcon: <IconTicket size={22} />,
     loadTickets: () => supportApi.adminAgentRaisedTickets(),
+  },
+  call: {
+    channel: TICKET_CHANNELS.CALL,
+    panelTitle: "Call tickets",
+    exportPrefix: "call-tickets",
+    loadingMessage: "Loading call tickets…",
+    emptyTitle: "No call tickets yet",
+    emptyMessage: "Raise a ticket from Call Management to see it here with full details.",
+    defaultCategory: "Call",
+    heroIcon: <IconPhone size={22} />,
+    loadTickets: () => supportApi.adminTickets({ channel: TICKET_CHANNELS.CALL }),
   },
 };
 
@@ -510,24 +524,36 @@ export function SubmissionTicketsModule({
 
       <div className="hs-submissions-panel-wrap">
         <div className={`hs-submissions-panel hs-submissions-panel--${variant}`}>
-          <div className={`hs-submissions-panel__hero hs-submissions-panel__hero--${variant}`}>
-            <div className="hs-submissions-panel__hero-main">
-              <div className={`hs-submissions-panel__hero-icon hs-submissions-panel__hero-icon--${variant}`} aria-hidden>
-                {config.heroIcon}
-              </div>
-              <div>
-                <h2>{config.panelTitle}</h2>
-                {!loading && (
-                  <p className="hs-panel__head-sub">
-                    {filteredTickets.length} of {tickets.length} shown
-                    {filtersActive && " (filtered)"}
-                    {openCount > 0 && ` · ${openCount} need attention`}
-                    {" · Use View to open ticket details"}
-                  </p>
-                )}
+          {variant !== "agent-raised" && variant !== "email" && variant !== "call" ? (
+            <div className={`hs-submissions-panel__hero hs-submissions-panel__hero--${variant}`}>
+              <div className="hs-submissions-panel__hero-main">
+                <div className={`hs-submissions-panel__hero-icon hs-submissions-panel__hero-icon--${variant}`} aria-hidden>
+                  {config.heroIcon}
+                </div>
+                <div>
+                  <h2>{config.panelTitle}</h2>
+                  {!loading && (
+                    <p className="hs-panel__head-sub">
+                      {filteredTickets.length} of {tickets.length} shown
+                      {filtersActive && " (filtered)"}
+                      {openCount > 0 && ` · ${openCount} need attention`}
+                      {" · Use View to open ticket details"}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
+
+          {variant === "email" && !loading ? (
+            <div className="hs-submissions-panel__summary">
+              <p>
+                <strong>{filteredTickets.length}</strong> of {tickets.length} email tickets shown
+                {filtersActive ? " (filtered)" : ""}
+                {openCount > 0 ? ` · ${openCount} need attention` : ""}
+              </p>
+            </div>
+          ) : null}
 
           {!loading && (
             <div className="hs-submissions-panel__kpis">
@@ -593,6 +619,13 @@ export function SubmissionTicketsModule({
             <div className="hs-submissions-panel__loading">{config.loadingMessage}</div>
           ) : filteredTickets.length === 0 ? (
             <div className="hs-submissions-empty">
+              <img
+                className="hs-submissions-empty__art"
+                src="/illustrations/empty-inbox.svg"
+                alt=""
+                width={220}
+                height={160}
+              />
               <h3>{config.emptyTitle}</h3>
               <p>{config.emptyMessage}</p>
             </div>
@@ -689,6 +722,15 @@ export function SubmissionTicketsModule({
         onNotifyEmailChange={setNotifyEmail}
         onNotifySmsChange={setNotifySms}
         showEmailChannel={variant === "email"}
+        onAssigned={async (data) => {
+          if (selected) await refreshDetail(ticketId(selected));
+          const parts = [data?.message || "Assigned to technical team."];
+          if (data?.emailSent) parts.push("Email sent to assignee.");
+          if (data?.smsSent) parts.push("SMS sent to assignee.");
+          if (data?.emailError) parts.push(`Email issue: ${data.emailError}`);
+          if (data?.smsError) parts.push(`SMS issue: ${data.smsError}`);
+          setActionStatus(parts.join(" "));
+        }}
       />
     </>
   );

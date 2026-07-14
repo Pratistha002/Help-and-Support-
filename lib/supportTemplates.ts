@@ -171,6 +171,21 @@ export const SUPPORT_SMS_TEMPLATES: SupportTemplate[] = [
     forStatus: "ESCALATED",
     body: "{{companyName}} Support: Ticket {{ticketNumber}} has been escalated. Our specialist team will contact you shortly.",
   },
+  {
+    id: "sms_callback_scheduled",
+    label: "Callback scheduled",
+    body: "{{companyName}} Support: We will call you shortly about ticket {{ticketNumber}}. Please keep your phone available.",
+  },
+  {
+    id: "sms_custom_update",
+    label: "Quick update",
+    body: "{{companyName}} Support: Update on ticket {{ticketNumber}} (\"{{subject}}\"): our team is reviewing your case. Thank you for your patience.",
+  },
+  {
+    id: "sms_thanks",
+    label: "Thank you",
+    body: "{{companyName}} Support: Thank you for contacting us about ticket {{ticketNumber}}. We appreciate your patience.",
+  },
 ];
 
 export type TemplateVars = {

@@ -5,12 +5,12 @@ import { IconCheck, IconMail, IconMessage, IconPhone, IconTicket, IconUser } fro
 import "./help-support-notifications.css";
 
 const CHANNEL_META: Record<string, { label: string; icon: typeof IconTicket; color: string }> = {
-  TICKET_FORM: { label: "Form", icon: IconTicket, color: "#6366f1" },
+  TICKET_FORM: { label: "Form", icon: IconTicket, color: "#3170a5" },
   EMAIL: { label: "Email", icon: IconMail, color: "#3b82f6" },
   CALL: { label: "Call", icon: IconPhone, color: "#f97316" },
   LIVE_CHAT: { label: "Live Chat", icon: IconMessage, color: "#0d9488" },
-  SMS: { label: "SMS", icon: IconMessage, color: "#8b5cf6" },
-  ADMIN_RAISED: { label: "Live Agent", icon: IconTicket, color: "#7c3aed" },
+  SMS: { label: "SMS", icon: IconMessage, color: "#0891b2" },
+  ADMIN_RAISED: { label: "Live Agent", icon: IconTicket, color: "#1e3a5f" },
 };
 
 function consumerLabel(id?: string) {

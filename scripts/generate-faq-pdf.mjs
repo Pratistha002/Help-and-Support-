@@ -96,7 +96,7 @@ function generate() {
   doc.moveDown(1);
   doc.fillColor(BRAND.muted).fontSize(9);
   doc.text(`Generated: ${new Date().toLocaleDateString("en-IN", { dateStyle: "long" })}`);
-  doc.text("Support: saarthix.help@gmail.com | +1 878 732 2485");
+  doc.text("Support: Saarthiworkforce@gmail.com | +1 878 732 2485");
 
   // Table of contents
   doc.addPage();
@@ -147,7 +147,7 @@ function generate() {
   const channels = [
     ["Live chat", "Connect with a support agent in real time from the Help & Support page."],
     ["AI assistant", "Ask questions and get instant answers based on these FAQs."],
-    ["Email", "saarthix.help@gmail.com — response typically within 24 hours."],
+    ["Email", "Saarthiworkforce@gmail.com — response typically within 24 hours."],
     ["Phone", "+1 878 732 2485 — request a callback from Help & Support."],
     ["Create ticket", "Submit a detailed request and track progress under Track ticket."],
   ];
