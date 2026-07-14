@@ -22,6 +22,27 @@ export const LIVE_AGENT_CONNECT_MODAL_BODY =
 export const LIVE_AGENT_OFFER_PRIMARY_LABEL = "Connect to live agent";
 export const LIVE_AGENT_OFFER_DISMISS_LABEL = "Continue with AI";
 
+export const QUERY_NOT_LISTED_PROMPT =
+  "No problem — describe your issue in your own words. I'll try to answer it in one step, then you can connect with a live agent if you still need help.";
+
+/** Quick tags shown in the post-chat agent rating (Swiggy / Zomato style). */
+export const AGENT_RATING_TAGS = [
+  "Polite & patient",
+  "Solved my issue",
+  "Quick response",
+  "Knowledgeable",
+  "Clear explanation",
+  "Needs improvement",
+] as const;
+
+export const AGENT_RATING_LABELS: Record<number, string> = {
+  1: "Terrible",
+  2: "Bad",
+  3: "Okay",
+  4: "Good",
+  5: "Excellent",
+};
+
 export const HELP_CHANNEL_CARDS = [
   { id: "LIVE_CHAT", label: "Live chat", badge: "Chat · Available now", icon: "💬", tint: "#dbeafe", accent: "#3b82f6" },
   { id: "EMAIL", label: "Email support", badge: SUPPORT_EMAIL, icon: "✉️", tint: "#fef3c7", accent: "#f59e0b" },

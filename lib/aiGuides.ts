@@ -118,9 +118,14 @@ If the page stays blank, try another browser, refresh once, or sign out and back
 1. Make sure you’re on your **active role** in TalentX and the skill is unlocked in your plan.
 2. Use a stable internet connection and refresh the page once.
 3. To **submit**, answer all required questions and click Submit — don’t close the tab early.
-4. If you **failed**, review the prep materials on your role timeline and retake when allowed.
 
-If the test won’t start or submit after retrying, note the skill name and any error message, then chat with a live agent or create a ticket.`,
+If you **failed** the test:
+1. Review the learning topics on your TalentX role plan (Gantt / timeline).
+2. Open the skill again and click **Retake test** when available.
+3. You need at least **80%** to pass.
+4. Check your **Detailed report** for areas to practice.
+
+If the test won’t start or submit after retrying, note the skill name and any error message, then chat with a live agent.`,
   },
   {
     id: "profile",
@@ -132,15 +137,15 @@ If the test won’t start or submit after retrying, note the skill name and any 
       /\bprofile\s*(completion|required|setup|incomplete)\b/i,
       /\bfirst login|new account setup\b/i,
     ],
-    answer: `Why profile completion is required:
+    answer: `You're asked to complete your profile only if a manager or HR invited you.
 
-When your manager or HR invites you, a basic account is created. Before using TalentX or InterviewX, you need to:
+When you're invited, a basic account is created with just your name, email, and a temporary password. On first login, you need to:
 
-1. Set a **permanent password** (replace any temporary one).
-2. Fill in required fields such as name, designation, and department.
-3. Save and continue to your employee dashboard.
+1. Set a **permanent password**.
+2. Fill in required fields such as designation and department.
+3. Save and continue — then you can use TalentX or InterviewX.
 
-This keeps your progress and certificates linked to the right person. If the form won’t save, check that all required fields are filled and try again.`,
+If you signed up yourself through the registration form, your profile is already complete and you won't see this step.`,
   },
   {
     id: "invite",

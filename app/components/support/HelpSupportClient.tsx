@@ -15,6 +15,7 @@ import {
   LIVE_AGENT_OFFER_TITLE,
   LIVE_AGENT_CONNECT_MODAL_TITLE,
   LIVE_AGENT_CONNECT_MODAL_BODY,
+  QUERY_NOT_LISTED_PROMPT,
   SUPPORT_EMAIL,
   resolveConsumerType,
   wantsLiveAgent,
@@ -27,6 +28,7 @@ import { clearChatState } from "@/lib/chatPersistence";
 import { syncWorkforceAuthFromPage } from "@/lib/workforceSync";
 import { IconBot, IconChevronDown, IconLiveChat, IconMail, IconPhone, IconRefresh, IconSend, IconSparkle } from "./HelpChatIcons";
 import { SupportLoginGateModal } from "./SupportLoginGateModal";
+import { AgentRatingPanel } from "./AgentRatingPanel";
 import "./help.css";
 
 type ChatMsg = { role: "user" | "assistant"; content: string; meta?: any };
@@ -201,6 +203,10 @@ export function HelpSupportClient() {
   const [liveLoading, setLiveLoading] = useState(false);
   const [noAgentModal, setNoAgentModal] = useState(false);
   const [showAgentConnectModal, setShowAgentConnectModal] = useState(false);
+  const [queryNotListedPending, setQueryNotListedPending] = useState(false);
+  const [showAgentRating, setShowAgentRating] = useState(false);
+  const [ratingSession, setRatingSession] = useState<any>(null);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const chatColRef = useRef<HTMLDivElement>(null);
   const faqColRef = useRef<HTMLDivElement>(null);
@@ -348,6 +354,23 @@ export function HelpSupportClient() {
           if (s?.status === "CLOSED") {
             stopPolling();
             liveStatusRef.current = null;
+            if (s.assignedAdminId || s.assignedAdminEmail) {
+              setRatingSession(s);
+              setShowAgentRating(true);
+              void supportApi
+                .liveChatGetRating(sessionId)
+                .then((res) => {
+                  if (res?.rating) {
+                    setShowAgentRating(false);
+                    setChatMode("ai");
+                  }
+                })
+                .catch(() => {
+                  /* show rating UI anyway */
+                });
+            } else {
+              setChatMode("ai");
+            }
           }
         } catch {
           /* ignore */
@@ -521,6 +544,9 @@ export function HelpSupportClient() {
   const sendAiMessage = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || aiLoading) return;
+    const fromQueryNotListed = queryNotListedPending;
+    if (fromQueryNotListed) setQueryNotListedPending(false);
+
     if (wantsLiveAgent(trimmed)) {
       setMessages((p) => [
         ...p,
@@ -528,6 +554,7 @@ export function HelpSupportClient() {
         { role: "assistant", content: "I'll connect you with a live support agent.", meta: { showConnectAgent: true } },
       ]);
       setShowInChatAgentOffer(true);
+      setShowAgentConnectModal(true);
       setInput("");
       return;
     }
@@ -544,25 +571,33 @@ export function HelpSupportClient() {
         serviceLabel: selectedService || undefined,
       });
       setSessionId(res.sessionId || sessionId);
-      const offerAgent = shouldOfferLiveAgentConnect(res);
+      const offerAgent = fromQueryNotListed || shouldOfferLiveAgentConnect(res);
       const assistantMeta = {
         ...res,
         showConnectAgent: offerAgent,
       };
       setMessages((p) => [...p, { role: "assistant", content: res.reply, meta: assistantMeta }]);
       const wasResolved = Boolean(res.matchedFromGuide || res.matchedFromDb);
-      setAiExchangeCount((prev) => {
-        const next = prev + 1;
-        if (wasResolved) {
-          setShowInChatAgentOffer(false);
-          setShowAgentConnectModal(false);
-        } else if (offerAgent && !agentOfferDismissed) {
-          setShowInChatAgentOffer(true);
-        } else if (next >= LIVE_AGENT_OFFER_AFTER_EXCHANGES && !agentOfferDismissed) {
-          setShowInChatAgentOffer(true);
-        }
-        return next;
-      });
+
+      if (fromQueryNotListed) {
+        // After "Query not listed": one-step AI answer (if any), then connect-with-agent popup.
+        setShowInChatAgentOffer(true);
+        setShowAgentConnectModal(true);
+        setAgentOfferDismissed(false);
+      } else {
+        setAiExchangeCount((prev) => {
+          const next = prev + 1;
+          if (wasResolved) {
+            setShowInChatAgentOffer(false);
+            setShowAgentConnectModal(false);
+          } else if (offerAgent && !agentOfferDismissed) {
+            setShowInChatAgentOffer(true);
+          } else if (next >= LIVE_AGENT_OFFER_AFTER_EXCHANGES && !agentOfferDismissed) {
+            setShowInChatAgentOffer(true);
+          }
+          return next;
+        });
+      }
     } catch {
       setMessages((p) => [
         ...p,
@@ -572,8 +607,9 @@ export function HelpSupportClient() {
           meta: { showConnectAgent: true, intent: "no_match" },
         },
       ]);
-      if (!agentOfferDismissed) {
+      if (fromQueryNotListed || !agentOfferDismissed) {
         setShowInChatAgentOffer(true);
+        if (fromQueryNotListed) setShowAgentConnectModal(true);
       }
     } finally {
       setAiLoading(false);
@@ -581,17 +617,40 @@ export function HelpSupportClient() {
   };
 
   const handleQueryNotListed = () => {
+    setQueryNotListedPending(true);
+    setAgentOfferDismissed(false);
+    setShowInChatAgentOffer(false);
+    setShowAgentConnectModal(false);
     setMessages((p) => [
       ...p,
       { role: "user", content: "My query isn't listed" },
       {
         role: "assistant",
-        content: `${LIVE_AGENT_OFFER_TITLE} — ${LIVE_AGENT_OFFER_BODY}`,
-        meta: { showConnectAgent: true },
+        content: QUERY_NOT_LISTED_PROMPT,
       },
     ]);
-    setShowInChatAgentOffer(true);
-    setAgentOfferDismissed(false);
+  };
+
+  const dismissAgentRating = () => {
+    setShowAgentRating(false);
+    setRatingSession(null);
+    setLiveSession(null);
+    setLiveMessages([]);
+    setChatMode("ai");
+  };
+
+  const submitAgentRating = async (payload: { rating: number; comment: string; tags: string[] }) => {
+    if (!ratingSession?.id) return;
+    setRatingSubmitting(true);
+    try {
+      await supportApi.liveChatSubmitRating(ratingSession.id, payload);
+      showToast("Thanks for rating your agent!");
+    } catch (e: any) {
+      showToast(e?.message || "Could not save rating");
+      throw e;
+    } finally {
+      setRatingSubmitting(false);
+    }
   };
 
   const handleBackToMenu = () => {
@@ -599,6 +658,7 @@ export function HelpSupportClient() {
     setServiceFaqChips([]);
     setShowInChatAgentOffer(false);
     setAgentOfferDismissed(false);
+    setQueryNotListedPending(false);
     setFlowPhase(auth.user ? "platform" : "role");
   };
 
@@ -662,26 +722,38 @@ export function HelpSupportClient() {
   };
 
   const refreshChat = useCallback(() => {
-    clearChatState();
-    stopPolling();
-    liveStatusRef.current = null;
-    setLiveSession(null);
-    setLiveMessages([]);
-    setLiveInput("");
-    setLiveLoading(false);
-    setMessages([]);
-    setSessionId(null);
-    setInput("");
-    setAiExchangeCount(0);
-    setShowInChatAgentOffer(false);
-    setShowAgentConnectModal(false);
-    setAgentOfferDismissed(false);
-    setSelectedService(null);
-    setServiceFaqChips([]);
-    setChatMode("ai");
-    setFlowPhase(auth.user ? "platform" : "role");
-    showToast("Chat refreshed — start a new conversation.");
-  }, [auth.user, stopPolling]);
+    void (async () => {
+      if (liveSession?.id && (liveSession.status === "PENDING" || liveSession.status === "ACTIVE")) {
+        try {
+          await supportApi.liveChatClose(liveSession.id);
+        } catch {
+          /* ignore */
+        }
+      }
+      clearChatState();
+      stopPolling();
+      liveStatusRef.current = null;
+      setLiveSession(null);
+      setLiveMessages([]);
+      setLiveInput("");
+      setLiveLoading(false);
+      setShowAgentRating(false);
+      setRatingSession(null);
+      setQueryNotListedPending(false);
+      setMessages([]);
+      setSessionId(null);
+      setInput("");
+      setAiExchangeCount(0);
+      setShowInChatAgentOffer(false);
+      setShowAgentConnectModal(false);
+      setAgentOfferDismissed(false);
+      setSelectedService(null);
+      setServiceFaqChips([]);
+      setChatMode("ai");
+      setFlowPhase(auth.user ? "platform" : "role");
+      showToast("Chat refreshed — start a new conversation.");
+    })();
+  }, [auth.user, liveSession, stopPolling, showToast]);
 
   return (
     <div className="sx-help-page">
@@ -824,25 +896,6 @@ export function HelpSupportClient() {
               ) : null}
 
               <div className={`sx-help-chat-col ${aiPanelOpen ? "sx-help-chat-col--open" : ""}`} ref={chatColRef}>
-              <div className="sx-ai-support-topbar">
-                <div className="sx-ai-support-topbar__brand">
-                  <span className="sx-ai-support-topbar__icon" aria-hidden>
-                    <IconSparkle size={18} />
-                  </span>
-                  <div>
-                    <strong>AI Support Assistant</strong>
-                    <span>Ask anything — we will guide you or connect you to an agent.</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="sx-ai-support-topbar__close"
-                  onClick={() => setAiPanelOpen(false)}
-                  aria-label="Close chat"
-                >
-                  ×
-                </button>
-              </div>
               <div className="sx-ai-chat-header">
                 <div className="sx-ai-chat-identity">
                   <AiAvatar size="lg" />
@@ -877,7 +930,7 @@ export function HelpSupportClient() {
                         <button
                           type="button"
                           className="sx-help-chat-tab"
-                          onClick={() => { setChatMode("ai"); stopPolling(); }}
+                          onClick={() => { void cancelLiveWait(); }}
                         >
                           <IconSparkle size={15} />
                           AI Chat
@@ -904,6 +957,14 @@ export function HelpSupportClient() {
                       </button>
                     </>
                   )}
+                  <button
+                    type="button"
+                    className="sx-ai-chat-header__close"
+                    onClick={() => setAiPanelOpen(false)}
+                    aria-label="Close chat"
+                  >
+                    ×
+                  </button>
                 </div>
               </div>
 
@@ -1127,16 +1188,10 @@ export function HelpSupportClient() {
               ) : (
                 <>
                   <div className="sx-help-messages" ref={messagesContainerRef}>
-                    {liveLoading ? <div className="sx-help-msg sx-help-msg--system">Connecting to an agent…</div> : null}
-                    {liveSession?.status === "PENDING" ? (
-                      <div className="sx-help-live-banner">
-                        Your request has been sent. An agent will accept your chat shortly — please stay on this page.
-                        <button type="button" className="sx-help-live-cancel" onClick={() => void cancelLiveWait()}>
-                          Cancel request
-                        </button>
-                      </div>
+                    {liveLoading && liveSession?.status !== "PENDING" ? (
+                      <div className="sx-help-msg sx-help-msg--system">Connecting to an agent…</div>
                     ) : null}
-                    {liveMessages.length === 0 && !liveLoading && liveSession?.status !== "PENDING" ? (
+                    {liveMessages.length === 0 && !liveLoading && liveSession?.status !== "PENDING" && !showAgentRating ? (
                       <div className="sx-help-msg sx-help-msg--assistant">
                         Start a conversation with our support team. Messages appear here once connected.
                       </div>
@@ -1166,25 +1221,40 @@ export function HelpSupportClient() {
                         </div>
                       );
                     })}
+                    {showAgentRating && (liveSession?.status === "CLOSED" || ratingSession) ? (
+                      <div className="sx-help-msg sx-help-msg--system">This live chat has ended. Please rate your agent below.</div>
+                    ) : null}
                   </div>
-                  <div className="sx-help-input-row sx-ai-input-row">
-                    <input
-                      value={liveInput}
-                      onChange={(e) => setLiveInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && void sendLiveMessage()}
-                      placeholder={liveSession?.status === "ACTIVE" ? "Message your agent…" : "Waiting for agent to accept…"}
-                      disabled={liveSession?.status !== "ACTIVE"}
+                  {showAgentRating && (ratingSession || liveSession) ? (
+                    <AgentRatingPanel
+                      agentName={
+                        (ratingSession || liveSession)?.assignedAdminName ||
+                        (ratingSession || liveSession)?.assignedAdminEmail
+                      }
+                      submitting={ratingSubmitting}
+                      onSubmit={submitAgentRating}
+                      onSkip={dismissAgentRating}
                     />
-                    <button
-                      type="button"
-                      className="sx-ai-send-btn sx-ai-send-btn--live"
-                      onClick={() => void sendLiveMessage()}
-                      disabled={liveSession?.status !== "ACTIVE" || !liveInput.trim()}
-                      aria-label="Send message"
-                    >
-                      <IconSend size={18} />
-                    </button>
-                  </div>
+                  ) : (
+                    <div className="sx-help-input-row sx-ai-input-row">
+                      <input
+                        value={liveInput}
+                        onChange={(e) => setLiveInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && void sendLiveMessage()}
+                        placeholder={liveSession?.status === "ACTIVE" ? "Message your agent…" : "Waiting for agent to accept…"}
+                        disabled={liveSession?.status !== "ACTIVE"}
+                      />
+                      <button
+                        type="button"
+                        className="sx-ai-send-btn sx-ai-send-btn--live"
+                        onClick={() => void sendLiveMessage()}
+                        disabled={liveSession?.status !== "ACTIVE" || !liveInput.trim()}
+                        aria-label="Send message"
+                      >
+                        <IconSend size={18} />
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
               </div>
