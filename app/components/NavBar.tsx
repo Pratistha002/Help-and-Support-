@@ -41,9 +41,11 @@ export function NavBar() {
     sync();
     window.addEventListener("hs-auth-changed", sync);
     window.addEventListener("jbv2-org-auth-changed", sync);
+    window.addEventListener("workforce-help-sync-done", sync);
     return () => {
       window.removeEventListener("hs-auth-changed", sync);
       window.removeEventListener("jbv2-org-auth-changed", sync);
+      window.removeEventListener("workforce-help-sync-done", sync);
     };
   }, [pathname]);
 

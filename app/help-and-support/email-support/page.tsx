@@ -14,13 +14,20 @@ function EmailSupportForm({ user }: { user: GuestUser }) {
   const [form, setForm] = useState({
     name: user.fullName || "",
     email: user.email || "",
-    phone: "",
+    phone: user.phone || "",
     subject: "",
     message: "",
   });
   const [done, setDone] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    // Keep phone in sync if SSO/profile loads after first paint.
+    if (user.phone && !form.phone) {
+      setForm((f) => ({ ...f, phone: user.phone || "" }));
+    }
+  }, [user.phone, form.phone]);
 
   useEffect(() => {
     supportApi

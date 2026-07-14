@@ -8,6 +8,8 @@ export type WorkforceSyncInput = {
   email?: string;
   fullName?: string;
   name?: string;
+  phone?: string;
+  mobileNo?: string;
   currentRole?: GuestUser["currentRole"];
   accountType?: GuestUser["accountType"];
   userType?: string;
@@ -31,11 +33,13 @@ export async function syncWorkforceAuthToHelp(input?: WorkforceSyncInput): Promi
 
   const forceFromSso = Boolean(input?.token?.trim());
   const existing = getAuthFromStorage();
-  if (!forceFromSso && existing.token && existing.user) return true;
+  // Re-sync when missing phone so profile mobileNo can fill support forms.
+  if (!forceFromSso && existing.token && existing.user?.phone) return true;
 
   let token = input?.token?.trim() || "";
   let email = input?.email?.trim() || "";
   let fullName = (input?.fullName || input?.name || "").trim();
+  let phone = (input?.phone || input?.mobileNo || "").trim();
   let accountType = input?.accountType;
   let currentRole = input?.currentRole;
 
@@ -48,11 +52,14 @@ export async function syncWorkforceAuthToHelp(input?: WorkforceSyncInput): Promi
           id?: string;
           email?: string;
           fullName?: string;
+          mobileNo?: string;
+          phone?: string;
           accountType?: GuestUser["accountType"];
           currentRole?: GuestUser["currentRole"];
         };
         email = email || orgUser.email || "";
         fullName = fullName || orgUser.fullName || "";
+        phone = phone || orgUser.mobileNo || orgUser.phone || "";
         accountType = accountType || orgUser.accountType;
         currentRole = currentRole || orgUser.currentRole;
       } catch {
@@ -78,8 +85,11 @@ export async function syncWorkforceAuthToHelp(input?: WorkforceSyncInput): Promi
         email,
         fullName,
         name: fullName,
+        phone,
+        mobileNo: phone,
         currentRole,
         accountType,
+        userType: input?.userType || currentRole || accountType,
       }),
     });
     if (!res.ok) {
@@ -100,6 +110,8 @@ export async function syncWorkforceAuthToHelp(input?: WorkforceSyncInput): Promi
       companyDomain: "",
       accountType: user.accountType,
       currentRole: user.accountType === "ADMIN" ? "ADMIN" : user.currentRole,
+      mobileNo: user.phone || "",
+      phone: user.phone || "",
     };
 
     localStorage.setItem(ORG_TOKEN_KEY, token);
@@ -124,6 +136,7 @@ export function readWorkforceSsoFromUrl(): WorkforceSyncInput | null {
     token,
     email: params.get("email")?.trim() || "",
     fullName: params.get("name")?.trim() || "",
+    phone: params.get("phone")?.trim() || params.get("mobile")?.trim() || "",
     userType: params.get("userType")?.trim() || "",
   };
 }
@@ -135,6 +148,8 @@ export function stripWorkforceSsoFromUrl() {
   params.delete("token");
   params.delete("email");
   params.delete("name");
+  params.delete("phone");
+  params.delete("mobile");
   params.delete("userType");
   const qs = params.toString();
   const next = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash || ""}`;

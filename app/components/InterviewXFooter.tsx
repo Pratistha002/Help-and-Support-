@@ -130,11 +130,11 @@ export function InterviewXFooter() {
                 <span className="ix-site-footer__tagline">Powered by SaarthiX</span>
                 <div className="ix-site-footer__socials">
                   <a
-                    href="https://www.linkedin.com/company/saarthix/"
+                    href="https://www.linkedin.com/company/saarthiworkforce"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ix-site-footer__social"
-                    aria-label="LinkedIn"
+                    aria-label="LinkedIn — SaarthiWorkforce"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                       <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
@@ -143,22 +143,11 @@ export function InterviewXFooter() {
                     </svg>
                   </a>
                   <a
-                    href="https://twitter.com"
+                    href="https://www.instagram.com/saarthi_workforce/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ix-site-footer__social"
-                    aria-label="X (Twitter)"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                  </a>
-                  <a
-                    href="https://www.instagram.com/saarthi_x/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ix-site-footer__social"
-                    aria-label="Instagram"
+                    aria-label="Instagram — SaarthiWorkforce"
                   >
                     <svg
                       width="18"
@@ -175,11 +164,11 @@ export function InterviewXFooter() {
                     </svg>
                   </a>
                   <a
-                    href="https://www.youtube.com/@SaarthiX/shorts?reload=9"
+                    href="https://www.youtube.com/@saarthi_workforce"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ix-site-footer__social"
-                    aria-label="YouTube"
+                    aria-label="YouTube — SaarthiWorkforce"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                       <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
@@ -249,7 +238,7 @@ export function InterviewXFooter() {
                       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.09a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 15.43v1.49z" />
                     </svg>
                   </span>
-                  <span>+91 779 550 0937</span>
+                  <span>+1 878 732 2485</span>
                 </li>
                 <li>
                   <span className="ix-site-footer__contact-icon" aria-hidden>
@@ -258,7 +247,7 @@ export function InterviewXFooter() {
                       <polyline points="22,6 12,13 2,6" />
                     </svg>
                   </span>
-                  <span>support@nattlabs.com</span>
+                  <span>Saarthiworkforce@gmail.com</span>
                 </li>
                 <li>
                   <span className="ix-site-footer__contact-icon" aria-hidden>
