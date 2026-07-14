@@ -3,17 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { appPath } from "@/lib/apiBase";
-import { getAuthFromStorage, type GuestUser } from "@/lib/auth";
+import type { GuestUser } from "@/lib/auth";
 import { supportApi } from "@/lib/supportApi";
 import { resolveConsumerType, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL } from "@/lib/supportConstants";
+import { SupportAuthGuard } from "../../components/support/SupportAuthGuard";
 import "../../components/support/help.css";
 
-export default function CallSupportPage() {
-  const [user, setUser] = useState<GuestUser | null>(null);
+function CallSupportForm({ user }: { user: GuestUser }) {
   const [form, setForm] = useState({
-    callerName: "",
+    callerName: user.fullName || "",
     phone: "",
-    email: "",
+    email: user.email || "",
   });
   const [done, setDone] = useState("");
   const [queuePos, setQueuePos] = useState<number | null>(null);
@@ -22,15 +22,6 @@ export default function CallSupportPage() {
   const [callConfig, setCallConfig] = useState<any>(null);
 
   useEffect(() => {
-    const { user: stored } = getAuthFromStorage();
-    setUser(stored);
-    if (stored) {
-      setForm((f) => ({
-        ...f,
-        callerName: f.callerName || stored.fullName || "",
-        email: f.email || stored.email || "",
-      }));
-    }
     supportApi.getCallConfig().then(setCallConfig).catch(() => null);
   }, []);
 
@@ -112,7 +103,9 @@ export default function CallSupportPage() {
             ) : (
               <div className="sx-form-card">
                 <h2>Callback request</h2>
-                <p className="sx-form-sub">Include country code (e.g. +91 for India, +1 for US)</p>
+                <p className="sx-form-sub">
+                  Signed in as <b>{user.email}</b> · include country code (e.g. +91)
+                </p>
 
                 <form onSubmit={submit}>
                   <div className="sx-form-field">
@@ -161,5 +154,13 @@ export default function CallSupportPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CallSupportPage() {
+  return (
+    <SupportAuthGuard featureLabel="request a callback" returnPath="/help-and-support/call-support">
+      {(auth) => <CallSupportForm user={auth.user!} />}
+    </SupportAuthGuard>
   );
 }

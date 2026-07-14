@@ -6,6 +6,13 @@ import { WorkforceAuthBridge } from "./components/WorkforceAuthBridge";
 export const metadata: Metadata = {
   title: "Saarthi Workforce — Help & Support",
   description: "Employee support hub with FAQs, AI chat, live agents, and tickets.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
+  },
 };
 
 const globalCss = `
@@ -124,7 +131,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Instrument+Sans:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
-        <meta name="theme-color" content="#0f172a" />
+        <meta name="theme-color" content="#1e3a5f" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <style suppressHydrationWarning dangerouslySetInnerHTML={{ __html: globalCss }} />
       </head>
       <body>

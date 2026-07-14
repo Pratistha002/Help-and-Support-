@@ -3,11 +3,17 @@
 import { useState } from "react";
 import {
   IconCheckCircle,
-  IconClock,
   IconLoader,
   IconPhoneOutgoing,
-  IconXCircle,
+  IconTicket,
 } from "./AdminIcons";
+
+const STATUS_OPTIONS = [
+  { id: "PENDING", label: "Pending" },
+  { id: "CONNECTED", label: "Connected" },
+  { id: "NOT_CONNECTED", label: "Not connected" },
+  { id: "RESOLVED", label: "Resolved" },
+] as const;
 
 function normalizeStatus(status?: string) {
   const s = (status || "PENDING").toUpperCase();
@@ -84,6 +90,7 @@ export function CallbackQueueRow({
   const isDialing = callBackLoadingId === loadingKey;
   const canDial = ["PENDING", "NOT_CONNECTED", "CONNECTED"].includes(status) && agentOnline && Boolean(onQueueDial);
   const displayStatus = isDialing ? "CALLING" : status;
+  const selectValue = STATUS_OPTIONS.some((o) => o.id === status) ? status : "PENDING";
 
   const patch = async (payload: UpdatePayload) => {
     if (!onUpdate) return null;
@@ -95,8 +102,8 @@ export function CallbackQueueRow({
     }
   };
 
-  const setStatus = (next: string) => {
-    if (next === status || saving) return;
+  const onStatusChange = (next: string) => {
+    if (!next || next === status || saving) return;
     void patch({ status: next });
   };
 
@@ -108,13 +115,27 @@ export function CallbackQueueRow({
       style={{ cursor: onSelect ? "pointer" : undefined }}
     >
       <td className="hs-call-table__when">
-        {item.requestedAt ? new Date(item.requestedAt).toLocaleString() : "—"}
+        {item.requestedAt
+          ? new Date(item.requestedAt).toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })
+          : "—"}
       </td>
-      <td>
-        <div className="hs-call-table__caller">{item.callerName || "—"}</div>
-        {item.callerEmail && <div className="hs-call-table__caller-name">{item.callerEmail}</div>}
+      <td className="hs-call-table__name-cell">
+        <div className="hs-call-table__caller" title={item.callerName || undefined}>
+          {item.callerName || "—"}
+        </div>
+        {item.callerEmail ? (
+          <div className="hs-call-table__caller-email" title={item.callerEmail}>
+            {item.callerEmail}
+          </div>
+        ) : null}
       </td>
-      <td className="hs-call-table__caller">{item.phone || "—"}</td>
+      <td className="hs-call-table__phone">{item.phone || "—"}</td>
       <td>
         <div className="hs-callback-queue__status-cell">
           <span className={queueStatusClass(displayStatus)}>
@@ -124,63 +145,39 @@ export function CallbackQueueRow({
         </div>
       </td>
       <td className="hs-callback-queue__actions" onClick={(e) => e.stopPropagation()}>
-        {status !== "RESOLVED" && (
-          <>
-            {["PENDING", "NOT_CONNECTED"].includes(status) && (
+        {status === "RESOLVED" ? (
+          <span className="hs-callback-queue__actions--muted">Completed</span>
+        ) : (
+          <div className="hs-callback-queue__actions-row">
+            {["PENDING", "NOT_CONNECTED", "CONNECTED"].includes(status) ? (
               <button
                 type="button"
-                className="hs-call-dashboard__callback-btn"
+                className="hs-call-dashboard__callback-btn hs-call-dashboard__callback-btn--sm"
                 title={agentOnline ? "Call this number" : "Go online on softphone first"}
                 onClick={() => onQueueDial?.(item.id)}
                 disabled={!canDial || isDialing || saving}
               >
-                {isDialing ? <IconLoader size={16} /> : <IconPhoneOutgoing size={16} />}
+                {isDialing ? <IconLoader size={14} /> : <IconPhoneOutgoing size={14} />}
                 Call back
               </button>
-            )}
+            ) : null}
 
-            <div className="hs-callback-queue__outcome" role="group" aria-label="Update call status">
-              <button
-                type="button"
-                className={`hs-callback-queue__outcome-btn hs-callback-queue__outcome-btn--connected${status === "CONNECTED" ? " is-active" : ""}`}
-                onClick={() => setStatus("CONNECTED")}
-                disabled={saving || status === "CONNECTED"}
-                title="Mark as connected"
+            <label className="hs-callback-queue__status-select-wrap">
+              <span className="visually-hidden">Update status</span>
+              <select
+                className="hs-callback-queue__status-select"
+                value={selectValue}
+                disabled={saving || isDialing}
+                aria-label="Update call status"
+                onChange={(e) => onStatusChange(e.target.value)}
               >
-                <IconPhoneOutgoing size={14} />
-                Connected
-              </button>
-              <button
-                type="button"
-                className={`hs-callback-queue__outcome-btn hs-callback-queue__outcome-btn--ok${status === "RESOLVED" ? " is-active" : ""}`}
-                onClick={() => void patch({ markResolved: true })}
-                disabled={saving}
-                title="Mark as resolved"
-              >
-                <IconCheckCircle size={14} />
-                Resolved
-              </button>
-              <button
-                type="button"
-                className={`hs-callback-queue__outcome-btn hs-callback-queue__outcome-btn--miss${status === "NOT_CONNECTED" ? " is-active" : ""}`}
-                onClick={() => void patch({ markNotConnected: true })}
-                disabled={saving || status === "NOT_CONNECTED"}
-                title="Mark as not connected"
-              >
-                <IconXCircle size={14} />
-                Not connected
-              </button>
-              <button
-                type="button"
-                className={`hs-callback-queue__outcome-btn hs-callback-queue__outcome-btn--pending${status === "PENDING" ? " is-active" : ""}`}
-                onClick={() => void patch({ markPending: true })}
-                disabled={saving || status === "PENDING"}
-                title="Mark as pending"
-              >
-                <IconClock size={14} />
-                Pending
-              </button>
-            </div>
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             {onRaiseTicket ? (
               <button
@@ -190,12 +187,12 @@ export function CallbackQueueRow({
                 disabled={saving}
                 title="Raise support ticket for this call"
               >
-                Raise ticket
+                <IconTicket size={14} />
+                Ticket
               </button>
             ) : null}
-          </>
+          </div>
         )}
-        {status === "RESOLVED" ? <span className="hs-callback-queue__actions--muted">—</span> : null}
       </td>
     </tr>
   );

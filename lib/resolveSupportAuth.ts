@@ -39,7 +39,10 @@ export type SupportAuth = {
   source: "hs" | "org" | null;
 };
 
-/** Prefer Help & Support guest auth; fall back to Workforce org auth on the same origin. */
+/**
+ * Prefer Help & Support guest auth; fall back to Workforce org auth on the same origin.
+ * Note: org JWT alone cannot call Help APIs — callers should run syncWorkforceAuthFromPage first.
+ */
 export function resolveSupportAuth(): SupportAuth {
   const hs = getAuthFromStorage();
   if (hs.token && hs.user) {

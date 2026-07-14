@@ -1,9 +1,12 @@
-/* Status & tracking ticket list */
+/* Status & tracking ticket list — SaarthiWorkforce corporate */
 .hs-tracking-panel-wrap {
   border-radius: 16px;
   overflow: hidden;
-  border-color: rgba(13, 148, 136, 0.14);
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(49, 112, 165, 0.14);
+  box-shadow:
+    0 1px 2px rgba(26, 35, 50, 0.04),
+    0 8px 28px -14px rgba(26, 35, 50, 0.1);
+  background: #fff;
 }
 
 .hs-tracking-panel {
@@ -16,9 +19,11 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.85rem;
-  padding: 1.1rem 1.15rem 0.85rem;
-  background: linear-gradient(135deg, #ecfeff 0%, #eff6ff 42%, #fff 100%);
-  border-bottom: 1px solid rgba(13, 148, 136, 0.12);
+  padding: 1.15rem 1.25rem 0.95rem;
+  background:
+    radial-gradient(ellipse 55% 80% at 0% 0%, rgba(49, 112, 165, 0.1), transparent 55%),
+    linear-gradient(135deg, #eff6ff 0%, #f0f4f8 45%, #ffffff 100%);
+  border-bottom: 1px solid rgba(49, 112, 165, 0.12);
 }
 
 .hs-tracking-panel__hero-main {
@@ -29,26 +34,30 @@
 
 .hs-tracking-panel__hero-icon {
   flex-shrink: 0;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.7rem;
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0d9488, #3170a5);
+  background: linear-gradient(135deg, #1e3a5f, #3170a5);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.28);
+  box-shadow: 0 4px 14px rgba(30, 58, 95, 0.32);
 }
 
 .hs-tracking-panel__hero h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 800;
-  color: #0f172a;
+  letter-spacing: -0.02em;
+  color: #1a2332;
 }
 
 .hs-tracking-panel__hero .hs-panel__head-sub {
-  margin-top: 0.25rem;
+  margin-top: 0.3rem;
+  color: #5c6675;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .hs-tracking-panel__hero-actions {
@@ -61,40 +70,42 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.5rem 0.85rem;
-  border-radius: 0.65rem;
+  padding: 0.52rem 0.95rem;
+  border-radius: 0.7rem;
   border: none;
-  background: linear-gradient(135deg, #3170a5, #2563eb);
+  background: linear-gradient(135deg, #1e3a5f, #3170a5);
   color: #fff;
   font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(49, 112, 165, 0.25);
-  transition: opacity 0.12s ease, transform 0.1s ease;
+  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.28);
+  transition: opacity 0.12s ease, transform 0.1s ease, box-shadow 0.12s ease;
 }
 
 .hs-tracking-panel__cta:hover {
-  opacity: 0.92;
+  opacity: 0.94;
   transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(30, 58, 95, 0.34);
 }
 
 .hs-tracking-panel__cta--ghost {
   background: #fff;
   color: #3170a5;
   border: 1px solid rgba(49, 112, 165, 0.28);
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(26, 35, 50, 0.04);
 }
 
 .hs-tracking-panel__cta--ghost:hover {
   background: rgba(49, 112, 165, 0.06);
+  box-shadow: none;
 }
 
 .hs-tracking-panel__kpis {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
-  padding: 0.85rem 1.15rem 0;
+  padding: 0.9rem 1.25rem 0;
 }
 
 @media (min-width: 768px) {
@@ -103,24 +114,31 @@
   }
 }
 
+.hs-tracking-panel .hs-sub-kpi {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(49, 112, 165, 0.1);
+  background: linear-gradient(180deg, #fafcfe 0%, #fff 100%);
+  box-shadow: 0 1px 3px rgba(26, 35, 50, 0.04);
+}
+
 .hs-tracking-panel__controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.65rem;
-  padding: 0.85rem 1.15rem;
-  border-bottom: 1px solid #f1f5f9;
-  background: #fafbfd;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid #eef2f6;
+  background: linear-gradient(180deg, #f7f9fc 0%, #fafbfd 100%);
 }
 
 .hs-tracking-panel__search {
-  flex: 1 1 220px;
+  flex: 1 1 240px;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.65rem;
-  border: 1px solid #e2e8f0;
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.7rem;
+  border: 1px solid #dce1e8;
   background: #fff;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -137,7 +155,7 @@
   outline: none;
   background: transparent;
   font-size: 0.8125rem;
-  color: #0f172a;
+  color: #1a2332;
 }
 
 .hs-tracking-panel__search input::placeholder {
@@ -145,8 +163,8 @@
 }
 
 .hs-tracking-panel__search:focus-within {
-  border-color: #0d9488;
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+  border-color: #3170a5;
+  box-shadow: 0 0 0 3px rgba(49, 112, 165, 0.16);
 }
 
 .hs-tracking-panel__filters {
@@ -159,13 +177,19 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.45rem 0.65rem;
-  border-radius: 0.65rem;
-  border: 1px solid #e2e8f0;
+  padding: 0.48rem 0.7rem;
+  border-radius: 0.7rem;
+  border: 1px solid #dce1e8;
   background: #fff;
-  color: #64748b;
+  color: #5c6675;
   font-size: 0.75rem;
   font-weight: 600;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.hs-tracking-panel__filter:focus-within {
+  border-color: #3170a5;
+  box-shadow: 0 0 0 2px rgba(49, 112, 165, 0.12);
 }
 
 .hs-tracking-panel__filter select {
@@ -174,43 +198,60 @@
   background: transparent;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #334155;
+  color: #1e3a5f;
   cursor: pointer;
+}
+
+.hs-tracking-panel .hs-ticket-export-btn {
+  background: #fff;
+  border: 1px solid rgba(49, 112, 165, 0.25);
+  color: #1e3a5f;
+  border-radius: 0.7rem;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(26, 35, 50, 0.04);
+}
+
+.hs-tracking-panel .hs-ticket-export-btn:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: rgba(49, 112, 165, 0.4);
+  color: #3170a5;
 }
 
 .hs-tracking-panel__chips {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
-  padding: 0 1.15rem 0.85rem;
-  border-bottom: 1px solid #f1f5f9;
-  background: #fafbfd;
+  padding: 0 1.25rem 0.95rem;
+  border-bottom: 1px solid #eef2f6;
+  background: linear-gradient(180deg, #fafbfd 0%, #fff 100%);
 }
 
 .hs-tracking-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.35rem 0.65rem;
+  padding: 0.38rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce1e8;
   background: #fff;
-  color: #475569;
+  color: #4a5568;
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .hs-tracking-chip:hover {
-  border-color: rgba(13, 148, 136, 0.35);
-  color: #0d9488;
+  border-color: rgba(49, 112, 165, 0.4);
+  color: #3170a5;
+  background: #f8fbff;
 }
 
 .hs-tracking-chip.is-active {
-  background: rgba(13, 148, 136, 0.1);
-  border-color: rgba(13, 148, 136, 0.35);
-  color: #0d9488;
+  background: linear-gradient(135deg, rgba(30, 58, 95, 0.08), rgba(49, 112, 165, 0.12));
+  border-color: rgba(49, 112, 165, 0.4);
+  color: #1e3a5f;
+  box-shadow: 0 1px 3px rgba(30, 58, 95, 0.08);
 }
 
 .hs-tracking-chip--warn.is-active,
@@ -218,30 +259,37 @@
   background: rgba(239, 68, 68, 0.08);
   border-color: rgba(239, 68, 68, 0.3);
   color: #dc2626;
+  box-shadow: none;
 }
 
 .hs-tracking-chip__count {
   min-width: 1.15rem;
   padding: 0.05rem 0.35rem;
   border-radius: 999px;
-  background: #f1f5f9;
+  background: #eef2f6;
   font-size: 0.65rem;
   font-weight: 800;
-  color: #64748b;
+  color: #5c6675;
 }
 
 .hs-tracking-chip.is-active .hs-tracking-chip__count {
-  background: rgba(13, 148, 136, 0.15);
-  color: #0d9488;
+  background: rgba(49, 112, 165, 0.18);
+  color: #1e3a5f;
 }
 
 .hs-tracking-panel__loading {
   padding: 2.5rem 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  color: #5c6675;
+  font-size: 0.875rem;
 }
 
 .hs-sub-channel {
   display: inline-flex;
-  padding: 0.2rem 0.5rem;
+  padding: 0.22rem 0.55rem;
   border-radius: 999px;
   font-size: 0.65rem;
   font-weight: 700;
@@ -287,6 +335,43 @@
   border-color: #e2e8f0;
 }
 
+.hs-tracking-panel .hs-submissions-table thead th {
+  background: linear-gradient(180deg, #f4f7fb 0%, #eef3f8 100%);
+  color: #1e3a5f;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(49, 112, 165, 0.12);
+}
+
+.hs-tracking-panel .hs-submissions-table tbody tr:hover td {
+  background: #f8fbff;
+}
+
+.hs-tracking-panel .hs-sub-view-btn {
+  border-color: rgba(49, 112, 165, 0.25);
+  color: #1e3a5f;
+  font-weight: 700;
+}
+
+.hs-tracking-panel .hs-sub-view-btn:hover {
+  background: #eff6ff;
+  border-color: rgba(49, 112, 165, 0.45);
+  color: #3170a5;
+}
+
+.hs-tracking-panel .hs-sub-user__avatar {
+  background: linear-gradient(135deg, #1e3a5f, #3170a5);
+  color: #fff;
+  font-weight: 800;
+}
+
+.hs-tracking-panel .hs-sub-ticket-id {
+  color: #1e3a5f;
+  font-weight: 800;
+}
+
 @media (max-width: 900px) {
   .hs-tracking-panel__controls {
     flex-direction: column;
@@ -317,11 +402,12 @@
 .hs-tracking-panel .hs-submissions-table-wrap {
   max-height: min(72vh, 680px);
   overflow: auto;
-  margin: 0.35rem 0.85rem 1rem;
-  border: 1px solid #e8ecf2;
+  margin: 0.45rem 1rem 1.1rem;
+  border: 1px solid rgba(49, 112, 165, 0.12);
   border-radius: 12px;
   background: #fff;
   -webkit-overflow-scrolling: touch;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .hs-tracking-panel .hs-table--full,
@@ -337,8 +423,9 @@
   position: sticky;
   top: 0;
   z-index: 3;
-  background: #f8fafc;
-  box-shadow: 0 1px 0 #eef2f7;
+  background: linear-gradient(180deg, #f4f7fb 0%, #eef3f8 100%);
+  box-shadow: 0 1px 0 rgba(49, 112, 165, 0.12);
+  color: #1e3a5f;
 }
 
 .hs-tracking-panel .hs-table--full tbody td,
@@ -348,7 +435,7 @@
 }
 
 .hs-tracking-panel .hs-table--full tbody tr + tr td {
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #eef2f6;
 }
 
 .hs-tracking-panel .hs-table--full td:nth-child(2),
@@ -373,7 +460,7 @@
   right: 0;
   background: #fff;
   z-index: 1;
-  box-shadow: -6px 0 10px -8px rgba(15, 23, 42, 0.18);
+  box-shadow: -6px 0 10px -8px rgba(26, 35, 50, 0.16);
 }
 
 .hs-tracking-panel .hs-table--full tbody tr:hover .hs-table__action {

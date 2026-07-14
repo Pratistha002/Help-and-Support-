@@ -4,17 +4,18 @@ import { notifySupportInbox, sendCallbackAckToCustomer } from "@/lib/server/mail
 import { callbackReference } from "@/lib/callbackConstants";
 import { callAckMessage, normalizeToE164, sendSms } from "@/lib/server/twilio";
 import { isMailConfigured } from "@/lib/server/env";
-import { json, errorResponse } from "@/lib/server/http";
+import { json, errorResponse, requireUser } from "@/lib/server/http";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await requireUser(req);
     const body = await req.json();
-    const callerName = String(body.callerName || body.name || "").trim();
+    const callerName = String(body.callerName || body.name || user.fullName || "").trim();
     const phoneRaw = String(body.phone || "").trim();
-    const email = String(body.email || body.callerEmail || "").trim().toLowerCase();
-    const consumerType = body.consumerType || "EMPLOYEE";
+    const email = String(body.email || body.callerEmail || user.email || "").trim().toLowerCase();
+    const consumerType = body.consumerType || user.currentRole || "EMPLOYEE";
 
     if (!callerName) return errorResponse("Please enter your name");
     const phone = normalizeToE164(phoneRaw);
@@ -82,6 +83,6 @@ export async function POST(req: NextRequest) {
       message: "Callback request received. Our team will call you back shortly.",
     });
   } catch (e: any) {
-    return errorResponse(e?.message || "Could not submit call request", 500);
+    return errorResponse(e?.message || "Could not submit call request", e?.message === "Login required" ? 401 : 500);
   }
 }

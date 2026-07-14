@@ -48,7 +48,13 @@ function ticketUserEmail(t: any) {
 function formatTicketDate(value?: string | Date | null) {
   if (!value) return "—";
   try {
-    return new Date(value).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
+    return new Date(value).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "2-digit",
+      hour: "numeric",
+      minute: "2-digit",
+    });
   } catch {
     return "—";
   }
@@ -202,10 +208,20 @@ function EscalatedTicketTable({
   return (
     <div className="hs-table-wrap hs-table-wrap--full hs-escalated-table-wrap">
       <table className="hs-table hs-table--clickable hs-table--full hs-escalated-table">
+        <colgroup>
+          <col className="hs-esc-col-id" />
+          <col className="hs-esc-col-customer" />
+          <col className="hs-esc-col-subject" />
+          <col className="hs-esc-col-assignee" />
+          <col className="hs-esc-col-priority" />
+          <col className="hs-esc-col-when" />
+          <col className="hs-esc-col-status" />
+          <col className="hs-esc-col-action" />
+        </colgroup>
         <thead>
           <tr>
-            {["Ticket ID", "Customer", "Subject", "Assigned to", "Designation", "Priority", "Escalated", "Status", ""].map((h) => (
-              <th key={h || "action"}>{h}</th>
+            {["Ticket", "Customer", "Subject", "Assigned to", "Priority", "Escalated", "Status", "Action"].map((h) => (
+              <th key={h}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -213,7 +229,11 @@ function EscalatedTicketTable({
           {tickets.map((t) => {
             const id = ticketId(t);
             const unassigned = !t.assignedTechnicalMemberId;
-            const initial = (ticketUserName(t) || "?").charAt(0).toUpperCase();
+            const name = ticketUserName(t);
+            const email = ticketUserEmail(t);
+            const initial = (name || "?").charAt(0).toUpperCase();
+            const assignee = t.assignedTechnicalMemberName || "";
+            const designation = t.assignedTechnicalMemberDesignation || "";
             return (
               <tr
                 key={id}
@@ -221,27 +241,36 @@ function EscalatedTicketTable({
                 onClick={() => onSelect(t)}
                 title="Click to view details & assign team"
               >
-                <td className="hs-table__ticket-id">
+                <td>
                   <span className="hs-escalated-ticket-id">{t.ticketNumber}</span>
                 </td>
                 <td>
                   <div className="hs-escalated-customer">
                     <span className="hs-escalated-customer__avatar" aria-hidden>{initial}</span>
-                    <div>
-                      <div className="hs-escalated-customer__name">{ticketUserName(t)}</div>
-                      <div className="hs-escalated-customer__email">{ticketUserEmail(t)}</div>
+                    <div className="hs-escalated-customer__meta">
+                      <div className="hs-escalated-customer__name" title={name}>{name}</div>
+                      {email && email !== "—" ? (
+                        <div className="hs-escalated-customer__email" title={email}>{email}</div>
+                      ) : null}
                     </div>
                   </div>
                 </td>
-                <td className="hs-table__subject">
-                  <span className="hs-escalated-subject">{t.subject || "—"}</span>
+                <td>
+                  <span className="hs-escalated-subject" title={t.subject || undefined}>
+                    {t.subject || "—"}
+                  </span>
                 </td>
                 <td>
-                  {t.assignedTechnicalMemberName ? (
-                    <span className="hs-escalated-assignee">
-                      <IconUser size={14} aria-hidden />
-                      {t.assignedTechnicalMemberName}
-                    </span>
+                  {assignee ? (
+                    <div className="hs-escalated-assignee-block" title={designation ? `${assignee} · ${designation}` : assignee}>
+                      <span className="hs-escalated-assignee">
+                        <IconUser size={13} aria-hidden />
+                        <span className="hs-escalated-assignee__name">{assignee}</span>
+                      </span>
+                      {designation ? (
+                        <span className="hs-escalated-designation">{designation}</span>
+                      ) : null}
+                    </div>
                   ) : (
                     <button
                       type="button"
@@ -254,23 +283,19 @@ function EscalatedTicketTable({
                     </button>
                   )}
                 </td>
-                <td>
-                  <span className="hs-escalated-designation">{t.assignedTechnicalMemberDesignation || "—"}</span>
-                </td>
                 <td><PriorityBadge priority={t.priority} /></td>
-                <td className="hs-table__date">{formatTicketDate(t.escalatedAt || t.updatedAt)}</td>
+                <td className="hs-escalated-when">
+                  {formatTicketDate(t.escalatedAt || t.updatedAt)}
+                </td>
                 <td><StatusBadge status={t.status} /></td>
-                <td className="hs-table__action">
+                <td className="hs-table__action" onClick={(e) => e.stopPropagation()}>
                   <button
                     type="button"
-                    className="hs-escalated-view-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(t);
-                    }}
+                    className={`hs-escalated-view-btn${unassigned ? " hs-escalated-view-btn--assign" : ""}`}
+                    onClick={() => onSelect(t)}
                   >
-                    Assign
-                    <IconChevronRight size={15} aria-hidden />
+                    {unassigned ? "Assign" : "View"}
+                    <IconChevronRight size={14} aria-hidden />
                   </button>
                 </td>
               </tr>
