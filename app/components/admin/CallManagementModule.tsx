@@ -422,7 +422,19 @@ function CallbackDetailSheet({
               <>
                 {!linkedTicket ? (
                   <div className="admin-call-banner admin-call-banner--info">
-                    This is a <strong>callback request only</strong> — not a support ticket yet. Use <strong>Create ticket</strong> after the call if you need follow-up.
+                    This is a <strong>callback request only</strong> — not a support ticket yet.{" "}
+                    <button
+                      type="button"
+                      className="admin-call-banner__link"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onOpenCallCreateTicket();
+                      }}
+                    >
+                      Create ticket
+                    </button>{" "}
+                    after the call if you need follow-up.
                   </div>
                 ) : null}
 
@@ -486,7 +498,15 @@ function CallbackDetailSheet({
                       ? softphoneState === "live" ? "On call…" : "Calling…"
                       : useSoftphone ? "Call back (browser)" : "Call back (phone)"}
                   </button>
-                  <button type="button" className="admin-btn-sm admin-btn-create-ticket" onClick={() => onOpenCallCreateTicket()}>
+                  <button
+                    type="button"
+                    className="admin-btn-sm admin-btn-create-ticket"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onOpenCallCreateTicket();
+                    }}
+                  >
                     {selected.ticketId ? "Create another ticket" : "Create ticket"}
                   </button>
                 </div>
@@ -772,26 +792,35 @@ export function CallManagementModule({ agentUser = null }: { agentUser?: AgentUs
   };
 
   const openRaiseTicketForCallback = (id: string) => {
+    if (Date.now() < raiseTicketGuardUntil.current) return;
     const c = callbacks.find((x) => String(x._id) === String(id));
     if (!c) {
       setActionStatus("Call request not found.");
       return;
     }
-    void selectCallback(c).then(() => {
-      setRaiseCallbackId(String(c._id));
-      setRaiseForm({
-        subject: `Callback: ${c.callerName || "Customer"}`,
-        description: `Callback request from ${c.callerName || "customer"} (${c.phone || "n/a"}).\nQueue position: #${c.queuePosition ?? "—"}.`,
-        category: "Call",
-        email: c.callerEmail || "",
-        name: c.callerName || "",
-        phone: c.phone || "",
-      });
-      setShowRaiseTicket(true);
+    // Only open the raise-ticket modal — do not open the detail sheet underneath.
+    setSelected(null);
+    setTicketDetail(null);
+    setRaiseCallbackId(String(c._id));
+    setRaiseForm({
+      subject: `Callback: ${c.callerName || "Customer"}`,
+      description: `Callback request from ${c.callerName || "customer"} (${c.phone || "n/a"}).\nQueue position: #${c.queuePosition ?? "—"}.`,
+      category: "Call",
+      email: c.callerEmail || "",
+      name: c.callerName || "",
+      phone: c.phone || "",
     });
+    setShowRaiseTicket(true);
   };
 
   const raiseTicketGuardUntil = useRef(0);
+
+  const closeRaiseTicket = () => {
+    // Block accidental click-through from reopening Raise / Create ticket.
+    raiseTicketGuardUntil.current = Date.now() + 600;
+    setShowRaiseTicket(false);
+    setRaiseCallbackId(null);
+  };
 
   const openCallCreateTicket = () => {
     if (Date.now() < raiseTicketGuardUntil.current) return;
@@ -821,6 +850,11 @@ export function CallManagementModule({ agentUser = null }: { agentUser?: AgentUs
 
   const handleNavRaiseTicket = () => {
     if (Date.now() < raiseTicketGuardUntil.current) return;
+    // Toggle: if already open, close instead of stacking another open.
+    if (showRaiseTicket) {
+      closeRaiseTicket();
+      return;
+    }
     openCallCreateTicket();
   };
 
@@ -891,8 +925,7 @@ export function CallManagementModule({ agentUser = null }: { agentUser?: AgentUs
       const ticketNumber = ticket?.ticketNumber || "—";
       const ticketId = ticket?._id || ticket?.id;
 
-      setShowRaiseTicket(false);
-      setRaiseCallbackId(null);
+      closeRaiseTicket();
       setRaiseForm({ subject: "", description: "", category: "Call", email: "", name: "", phone: "" });
       setActionStatus(`Ticket ${ticketNumber} created.`);
       setDetailTab("ticket");
@@ -1270,7 +1303,9 @@ export function CallManagementModule({ agentUser = null }: { agentUser?: AgentUs
           notifySms={notifySms}
           setNotifySms={setNotifySms}
           onClose={() => {
-            raiseTicketGuardUntil.current = Date.now() + 400;
+            raiseTicketGuardUntil.current = Date.now() + 600;
+            setShowRaiseTicket(false);
+            setRaiseCallbackId(null);
             setSelected(null);
             setTicketDetail(null);
             setActionStatus("");
@@ -1287,10 +1322,43 @@ export function CallManagementModule({ agentUser = null }: { agentUser?: AgentUs
       ) : null}
 
       {showRaiseTicket ? (
-        <div className="sx-help-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="hs-raise-ticket-title">
-          <form className="sx-help-modal sx-help-email-form hs-call-raise-ticket-form" onSubmit={submitRaiseTicket}>
-            <div className="hs-call-raise-ticket-form__scroll">
+        <div
+          className="sx-help-modal-backdrop hs-call-raise-ticket-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="hs-raise-ticket-title"
+          onMouseDown={(e) => {
+            // Click outside the form closes — and blocks click-through.
+            if (e.target === e.currentTarget) {
+              e.preventDefault();
+              e.stopPropagation();
+              closeRaiseTicket();
+            }
+          }}
+        >
+          <form
+            className="sx-help-modal sx-help-email-form hs-call-raise-ticket-form"
+            onSubmit={submitRaiseTicket}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="hs-call-raise-ticket-form__head">
               <h3 id="hs-raise-ticket-title">Create support ticket</h3>
+              <button
+                type="button"
+                className="hs-call-raise-ticket-form__close"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  closeRaiseTicket();
+                }}
+                aria-label="Close create ticket"
+                disabled={raisingTicket}
+              >
+                ×
+              </button>
+            </div>
+            <div className="hs-call-raise-ticket-form__scroll">
               <p className="admin-hint">
                 {raiseCallbackId
                   ? "Prefilled from the selected call request. Submit to create a new call ticket."
@@ -1359,9 +1427,10 @@ export function CallManagementModule({ agentUser = null }: { agentUser?: AgentUs
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setShowRaiseTicket(false);
-                  setRaiseCallbackId(null);
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  closeRaiseTicket();
                 }}
                 disabled={raisingTicket}
               >
