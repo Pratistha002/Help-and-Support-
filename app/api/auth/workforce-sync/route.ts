@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import type { GuestUser } from "@/lib/auth";
 import { json, errorResponse } from "@/lib/server/http";
 import { signToken } from "@/lib/server/jwt";
-import { verifyWorkforceToken } from "@/lib/server/workforceJwt";
+import { fetchWorkforceProfilePhone, verifyWorkforceToken } from "@/lib/server/workforceJwt";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,15 +23,28 @@ export async function POST(req: NextRequest) {
       claims.email.split("@")[0] ||
       "User";
 
-    const roleCandidate = String(body.currentRole || claims.currentRole || "EMPLOYEE");
+    const roleFromType = String(body.userType || "").toUpperCase();
+    const roleCandidate = String(
+      body.currentRole ||
+        claims.currentRole ||
+        (roleFromType === "MANAGER" || roleFromType === "HR" || roleFromType === "ADMIN" ? roleFromType : "") ||
+        "EMPLOYEE",
+    );
     const currentRole = (
       ["EMPLOYEE", "MANAGER", "HR", "ADMIN"].includes(roleCandidate) ? roleCandidate : "EMPLOYEE"
     ) as GuestUser["currentRole"];
 
-    const bodyAccount = String(body.accountType || "").toUpperCase();
+    const bodyAccount = String(body.accountType || body.userType || "").toUpperCase();
     const accountType = (
       claims.accountType === "ADMIN" || bodyAccount === "ADMIN" ? "ADMIN" : "EMPLOYEE"
     ) as GuestUser["accountType"];
+
+    let phone =
+      String(body.phone || body.mobileNo || claims.phone || "")
+        .trim() || "";
+    if (!phone) {
+      phone = await fetchWorkforceProfilePhone(token);
+    }
 
     const user: GuestUser = {
       id: claims.sub,
@@ -39,6 +52,7 @@ export async function POST(req: NextRequest) {
       fullName,
       accountType,
       currentRole: accountType === "ADMIN" ? "ADMIN" : currentRole,
+      ...(phone ? { phone } : {}),
     };
 
     const hsToken = await signToken(user);

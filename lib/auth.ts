@@ -7,6 +7,8 @@ export type GuestUser = {
   fullName: string;
   currentRole: "EMPLOYEE" | "MANAGER" | "HR" | "ADMIN";
   accountType: "EMPLOYEE" | "ADMIN";
+  /** From Workforce profile (`mobileNo`) when available */
+  phone?: string;
 };
 
 export function getAuthFromStorage(): { token: string; user: GuestUser | null } {

@@ -260,7 +260,22 @@ export function HelpSupportClient() {
   }, []);
 
   useEffect(() => {
-    void syncWorkforceAuthFromPage();
+    let cancelled = false;
+    void (async () => {
+      const ok = await syncWorkforceAuthFromPage().catch(() => false);
+      if (cancelled) return;
+      if (ok) {
+        const hs = getAuthFromStorage();
+        if (hs.token && hs.user) setAuth({ token: hs.token, user: hs.user });
+        else {
+          const next = resolveSupportAuth();
+          setAuth({ token: next.token, user: next.user });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -743,6 +758,29 @@ export function HelpSupportClient() {
                     </>
                   )}
                 </p>
+                <div className="sx-help-search-wrap sx-help-search-wrap--faq" role="search">
+                  <span className="sx-help-search-icon" aria-hidden>
+                    🔍
+                  </span>
+                  <input
+                    className="sx-help-search"
+                    type="search"
+                    placeholder="Search FAQs…"
+                    value={faqSearch}
+                    onChange={(e) => handleFaqSearchChange(e.target.value)}
+                    aria-label="Search FAQs"
+                  />
+                  {isFaqSearchActive ? (
+                    <button
+                      type="button"
+                      className="sx-help-search-clear"
+                      onClick={() => handleFaqSearchChange("")}
+                      aria-label="Clear FAQ search"
+                    >
+                      ×
+                    </button>
+                  ) : null}
+                </div>
               </div>
               <div className={`sx-help-faq-section ${aiPanelOpen ? "sx-help-faq-section--ai-open" : ""}`}>
               {!aiPanelOpen ? (

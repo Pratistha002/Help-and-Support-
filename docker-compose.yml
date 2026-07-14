@@ -36,17 +36,21 @@ services:
     restart: unless-stopped
     ports:
       - "3003:3003"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - .env
     environment:
       # SaarthiWorkforce Help & Support — dedicated DB (NOT shared with SaarthiX `saarthix_support`).
       MONGODB_URI: mongodb://somethingx-mongodb:27017/saarthi_workforce_support
       SUPPORT_MONGODB_DATABASE: ""
-      JWT_SECRET: ${JWT_SECRET:-}
-      ORG_AUTH_JWT_SECRET: ${ORG_AUTH_JWT_SECRET:-}
+      # JWT secrets come from env_file (.env) — do NOT override with empty ${JWT_SECRET:-}
       HELP_AGENT_PASSWORD: ${HELP_AGENT_PASSWORD:-Help@221716}
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:3003}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3002,http://localhost:3003}
+      # Server-side SSO: validate workforce tokens via TalentX (host machine from Docker)
+      WORKFORCE_API_INTERNAL_URL: ${WORKFORCE_API_INTERNAL_URL:-http://host.docker.internal:3002}
+      NEXT_PUBLIC_WORKFORCE_APP_URL: ${NEXT_PUBLIC_WORKFORCE_APP_URL:-http://localhost:3002}
       # Brevo + Twilio — loaded from env_file (.env); listed here for visibility
       MAIL_PROVIDER: ${MAIL_PROVIDER:-brevo}
       BREVO_API_KEY: ${BREVO_API_KEY:-}

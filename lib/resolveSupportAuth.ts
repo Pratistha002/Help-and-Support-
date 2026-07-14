@@ -9,6 +9,8 @@ type OrgUserLike = {
   fullName: string;
   accountType: "EMPLOYEE" | "ADMIN";
   currentRole: "EMPLOYEE" | "MANAGER" | "HR";
+  mobileNo?: string;
+  phone?: string;
 };
 
 function readOrgAuthFromStorage(): { token: string; user: OrgUserLike | null } {
@@ -24,12 +26,14 @@ function readOrgAuthFromStorage(): { token: string; user: OrgUserLike | null } {
 }
 
 function orgUserToGuest(user: OrgUserLike): GuestUser {
+  const phone = user.mobileNo || user.phone || undefined;
   return {
     id: user.id,
     email: user.email,
     fullName: user.fullName,
     accountType: user.accountType,
     currentRole: user.accountType === "ADMIN" ? "ADMIN" : user.currentRole || "EMPLOYEE",
+    ...(phone ? { phone } : {}),
   };
 }
 

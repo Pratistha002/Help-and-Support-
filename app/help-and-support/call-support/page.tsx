@@ -12,7 +12,7 @@ import "../../components/support/help.css";
 function CallSupportForm({ user }: { user: GuestUser }) {
   const [form, setForm] = useState({
     callerName: user.fullName || "",
-    phone: "",
+    phone: user.phone || "",
     email: user.email || "",
   });
   const [done, setDone] = useState("");
@@ -20,6 +20,12 @@ function CallSupportForm({ user }: { user: GuestUser }) {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [callConfig, setCallConfig] = useState<any>(null);
+
+  useEffect(() => {
+    if (user.phone && !form.phone) {
+      setForm((f) => ({ ...f, phone: user.phone || "" }));
+    }
+  }, [user.phone, form.phone]);
 
   useEffect(() => {
     supportApi.getCallConfig().then(setCallConfig).catch(() => null);
