@@ -28,18 +28,20 @@
   min-width: 0;
 }
 
-/* Status & Tracking module header */
+/* Status & Tracking module header — SaarthiWorkforce navy */
 .hs-admin__header--status-tracking {
-  background: linear-gradient(125deg, #ffffff 0%, #f0fdfa 48%, #ecfeff 100%);
+  background:
+    radial-gradient(ellipse 50% 90% at 0% 0%, rgba(49, 112, 165, 0.1), transparent 55%),
+    linear-gradient(125deg, #ffffff 0%, #eff6ff 48%, #f0f4f8 100%);
 }
 
 .hs-admin__header--status-tracking .hs-admin__header-accent {
-  background: linear-gradient(90deg, #0d9488 0%, #0891b2 50%, #3170a5 100%);
+  background: linear-gradient(90deg, #1e3a5f 0%, #3170a5 55%, #4a6278 100%);
 }
 
 .hs-admin__header-icon--status-tracking {
-  background: linear-gradient(135deg, #0d9488, #0891b2) !important;
-  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.28) !important;
+  background: linear-gradient(135deg, #1e3a5f, #3170a5) !important;
+  box-shadow: 0 6px 16px rgba(30, 58, 95, 0.32) !important;
 }
 
 .admin-workspace--status-tracking {
@@ -68,8 +70,10 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1.1rem 1.15rem 0.85rem;
-  background: linear-gradient(135deg, #eff6ff 0%, #ecfeff 42%, #fff 100%);
-  border-bottom: 1px solid rgba(49, 112, 165, 0.1);
+  background:
+    radial-gradient(ellipse 55% 80% at 0% 0%, rgba(49, 112, 165, 0.1), transparent 55%),
+    linear-gradient(135deg, #eff6ff 0%, #f0f4f8 42%, #fff 100%);
+  border-bottom: 1px solid rgba(49, 112, 165, 0.12);
 }
 
 .hs-analytics__hero-main {
@@ -86,9 +90,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3170a5, #0d9488);
+  background: linear-gradient(135deg, #1e3a5f, #3170a5);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(49, 112, 165, 0.28);
+  box-shadow: 0 4px 14px rgba(30, 58, 95, 0.32);
 }
 
 .hs-analytics__title {
@@ -144,13 +148,13 @@
   padding: 0.5rem 0.85rem;
   border-radius: 0.65rem;
   border: none;
-  background: linear-gradient(135deg, #3170a5, #2563eb);
+  background: linear-gradient(135deg, #1e3a5f, #3170a5);
   color: #fff;
   font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(49, 112, 165, 0.28);
+  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.28);
   transition: opacity 0.12s ease, transform 0.1s ease;
 }
 
@@ -287,9 +291,9 @@
 }
 
 .hs-analytics-chip.is-active {
-  background: rgba(49, 112, 165, 0.1);
-  border-color: rgba(49, 112, 165, 0.35);
-  color: #3170a5;
+  background: linear-gradient(135deg, rgba(30, 58, 95, 0.08), rgba(49, 112, 165, 0.12));
+  border-color: rgba(49, 112, 165, 0.4);
+  color: #1e3a5f;
 }
 
 .hs-analytics-chip--warn.is-active,
@@ -311,8 +315,8 @@
 }
 
 .hs-analytics-chip.is-active .hs-analytics-chip__count {
-  background: rgba(49, 112, 165, 0.15);
-  color: #3170a5;
+  background: rgba(49, 112, 165, 0.18);
+  color: #1e3a5f;
 }
 
 .hs-analytics-charts {

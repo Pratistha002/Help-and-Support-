@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { appPath } from "@/lib/apiBase";
-import { getAuthFromStorage, setAuthInStorage, type GuestUser } from "@/lib/auth";
+import { getAuthFromStorage, type GuestUser } from "@/lib/auth";
 import { resolveSupportAuth } from "@/lib/resolveSupportAuth";
 import { supportApi } from "@/lib/supportApi";
 import {
@@ -24,8 +24,9 @@ import { getGeneralTopicsForRole, getPlatformGuideTopicsForRole } from "@/lib/ai
 import { getFaqsForService, type FaqChip } from "@/lib/faqTopics";
 import { buildChatSuggestionChips } from "@/lib/chatSuggestions";
 import { clearChatState } from "@/lib/chatPersistence";
-import { syncWorkforceAuthToHelp } from "@/lib/workforceSync";
+import { syncWorkforceAuthFromPage } from "@/lib/workforceSync";
 import { IconBot, IconChevronDown, IconLiveChat, IconMail, IconPhone, IconRefresh, IconSend, IconSparkle } from "./HelpChatIcons";
+import { SupportLoginGateModal } from "./SupportLoginGateModal";
 import "./help.css";
 
 type ChatMsg = { role: "user" | "assistant"; content: string; meta?: any };
@@ -185,8 +186,11 @@ export function HelpSupportClient() {
   const [flowPhase, setFlowPhase] = useState<"role" | "general" | "platform" | "chat">("role");
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [serviceFaqChips, setServiceFaqChips] = useState<FaqChip[]>([]);
-  const [guestModal, setGuestModal] = useState(false);
-  const [guestForm, setGuestForm] = useState({ name: "", email: "" });
+  const [loginGate, setLoginGate] = useState<{ open: boolean; feature: string; returnPath: string }>({
+    open: false,
+    feature: "",
+    returnPath: "/help-and-support",
+  });
   const [toast, setToast] = useState("");
   const [showAllFaqs, setShowAllFaqs] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
@@ -256,7 +260,7 @@ export function HelpSupportClient() {
   }, []);
 
   useEffect(() => {
-    void syncWorkforceAuthToHelp();
+    void syncWorkforceAuthFromPage();
   }, []);
 
   useEffect(() => {
@@ -358,35 +362,22 @@ export function HelpSupportClient() {
   useEffect(() => () => stopPolling(), [stopPolling]);
 
   const ensureHsToken = useCallback(async (): Promise<boolean> => {
-    return syncWorkforceAuthToHelp();
+    return syncWorkforceAuthFromPage();
   }, []);
 
-  const ensureGuestAuth = async (): Promise<boolean> => {
-    if (await ensureHsToken()) return true;
-    const resolved = resolveSupportAuth();
-    if (resolved.user) {
-      setGuestForm({ name: resolved.user.fullName, email: resolved.user.email });
-    }
-    setGuestModal(true);
-    return false;
-  };
-
-  const submitGuestSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await supportApi.guestSignup({
-        name: guestForm.name,
-        email: guestForm.email,
-        currentRole: consumerType,
-      });
-      setAuthInStorage(res.token, res.user);
-      setGuestModal(false);
-      showToast("You're signed in — starting live chat…");
-      void startLiveChatAfterAuth();
-    } catch (err: any) {
-      showToast(err?.message || "Sign-in failed");
-    }
-  };
+  const requireLogin = useCallback(
+    async (featureLabel: string, returnPath = "/help-and-support"): Promise<boolean> => {
+      await ensureHsToken();
+      const hs = getAuthFromStorage();
+      if (hs.token && hs.user) {
+        setAuth({ token: hs.token, user: hs.user });
+        return true;
+      }
+      setLoginGate({ open: true, feature: featureLabel, returnPath });
+      return false;
+    },
+    [ensureHsToken],
+  );
 
   const startLiveChatAfterAuth = useCallback(async () => {
     const resolved = resolveSupportAuth();
@@ -424,8 +415,8 @@ export function HelpSupportClient() {
       if (/ECONNREFUSED|MongoNetworkError|connect.*27017/i.test(msg)) {
         showToast("Support service is temporarily unavailable. Please try again in a moment or create a ticket.");
       } else if (/401|403|Login required|Unauthorized/i.test(msg)) {
-        showToast("Please enter your name and email to connect with a live agent.");
-        setGuestModal(true);
+        showToast("Sign in to request a live chat with an agent.");
+        setLoginGate({ open: true, feature: "live chat", returnPath: "/help-and-support" });
       } else {
         showToast(msg || "Could not start live chat");
       }
@@ -450,10 +441,14 @@ export function HelpSupportClient() {
     setAiPanelOpen(true);
     setShowAgentConnectModal(false);
     setShowInChatAgentOffer(false);
-    setChatMode("agent");
     setFlowPhase("chat");
-    const ok = await ensureGuestAuth();
-    if (!ok) return;
+    const ok = await requireLogin("live chat", "/help-and-support");
+    if (!ok) {
+      setChatMode("ai");
+      showToast("Sign in to request a live chat with an agent.");
+      return;
+    }
+    setChatMode("agent");
     await startLiveChatAfterAuth();
   };
 
@@ -616,16 +611,26 @@ export function HelpSupportClient() {
     }
   };
 
-  const handleChannel = (id: string) => {
+  const handleChannel = async (id: string) => {
     if (id === "LIVE_CHAT") {
       setAiPanelOpen(true);
-      setChatMode("agent");
-      setFlowPhase("chat");
       focusChatPanel();
       void openLiveAgent();
-    } else if (id === "EMAIL") window.location.href = appPath("/help-and-support/email-support");
-    else if (id === "CALL") window.location.href = appPath("/help-and-support/call-support");
-    else if (id === "TICKET") window.location.href = appPath("/help-and-support/support-form");
+      return;
+    }
+    if (id === "EMAIL") {
+      const ok = await requireLogin("email support", "/help-and-support/email-support");
+      if (!ok) return;
+      window.location.href = appPath("/help-and-support/email-support");
+      return;
+    }
+    if (id === "CALL") {
+      const ok = await requireLogin("request a callback", "/help-and-support/call-support");
+      if (!ok) return;
+      window.location.href = appPath("/help-and-support/call-support");
+      return;
+    }
+    if (id === "TICKET") window.location.href = appPath("/help-and-support/support-form");
     else if (id === "TRACK") window.location.href = appPath("/help-and-support/track-tickets");
   };
 
@@ -716,14 +721,7 @@ export function HelpSupportClient() {
                 </button>
               ))}
             </div>
-          ) : (
-            <div className="sx-help-role-badge" aria-live="polite">
-              Signed in as <strong>{auth.user.fullName}</strong>
-              <span className="sx-help-role-badge-pill">
-                {CONSUMER_TYPES.find((r) => r.id === consumerType)?.label || "Employee"} FAQs
-              </span>
-            </div>
-          )}
+          ) : null}
         </section>
 
         <div className="sx-help-deck">
@@ -849,7 +847,8 @@ export function HelpSupportClient() {
                         <button
                           type="button"
                           className="sx-help-chat-tab live active"
-                          onClick={() => { setAiPanelOpen(true); setChatMode("agent"); setFlowPhase("chat"); focusChatPanel(); void openLiveAgent(); }}
+                          onClick={() => { setAiPanelOpen(true); setFlowPhase("chat"); focusChatPanel(); void openLiveAgent(); }}
+                          title={auth.user ? "Chat with a live agent" : "Sign in required for live chat"}
                         >
                           <IconLiveChat size={15} />
                           Live Agent
@@ -1178,10 +1177,13 @@ export function HelpSupportClient() {
                       <p>Send us your question — we typically reply within one business day.</p>
                     </div>
                   </div>
-                  <button type="button" className="sx-help-email-btn" onClick={() => handleChannel("EMAIL")}>
+                  <button type="button" className="sx-help-email-btn" onClick={() => void handleChannel("EMAIL")}>
                     <IconMail size={16} />
                     Send email
                   </button>
+                  {!auth.user ? (
+                    <p className="sx-help-auth-hint">Sign in required</p>
+                  ) : null}
                 </div>
 
                 <div className="sx-help-or-divider" aria-hidden>
@@ -1201,10 +1203,13 @@ export function HelpSupportClient() {
                   <p className="sx-help-callback-card__desc">
                     Prefer speaking with someone? Tell us your issue and our team will call you back at a time that suits you.
                   </p>
-                  <button type="button" className="sx-help-callback-btn" onClick={() => handleChannel("CALL")}>
+                  <button type="button" className="sx-help-callback-btn" onClick={() => void handleChannel("CALL")}>
                     <IconPhone size={16} />
                     Request call
                   </button>
+                  {!auth.user ? (
+                    <p className="sx-help-auth-hint">Sign in required</p>
+                  ) : null}
                 </div>
               </div>
             </aside>
@@ -1230,23 +1235,14 @@ export function HelpSupportClient() {
         </div>
       ) : null}
 
-      {guestModal ? (
-        <div className="sx-help-modal-backdrop">
-          <form className="sx-help-modal sx-help-email-form" onSubmit={submitGuestSignup}>
-            <h3>Sign in to chat</h3>
-            <p>Enter your name and email to start a live support session.</p>
-            <input required placeholder="Your name" value={guestForm.name} onChange={(e) => setGuestForm((f) => ({ ...f, name: e.target.value }))} />
-            <input required type="email" placeholder="Email" value={guestForm.email} onChange={(e) => setGuestForm((f) => ({ ...f, email: e.target.value }))} />
-            <div className="sx-help-modal-actions">
-              <button type="submit" className="primary">
-                Continue
-              </button>
-              <button type="button" onClick={() => setGuestModal(false)}>
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+      {loginGate.open ? (
+        <SupportLoginGateModal
+          open={loginGate.open}
+          featureLabel={loginGate.feature}
+          returnPath={loginGate.returnPath}
+          onClose={() => setLoginGate((g) => ({ ...g, open: false }))}
+          suggestAi
+        />
       ) : null}
 
       {showAgentConnectModal ? (

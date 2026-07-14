@@ -25,6 +25,7 @@ import { SubmissionTicketsModule } from "./SubmissionTicketsModule";
 import { IconAlertCircle, IconChart, IconListOrdered, IconPhone, IconTicket } from "./AdminIcons";
 import "./call-management.css";
 import "./manage-email.css";
+import "./ticket-detail.css";
 
 type CustomerHistoryData = { callbacks: any[]; tickets: any[] };
 type AgentUser = { id: string; email: string; fullName: string } | null;
@@ -76,41 +77,86 @@ function CustomerHistoryBlock({
 
   return (
     <div className="admin-customer-history">
-      <h4>
-        All activity for this customer
+      <div className="admin-customer-history__head">
+        <h4>All activity for this customer</h4>
         <span className="admin-customer-count-badge">{total} total</span>
-      </h4>
+      </div>
       {onSelectCallback && callbacks.length > 0 ? (
         <div className="admin-customer-history-section">
-          <p>Callback requests ({callbacks.length})</p>
-          {callbacks.map((c) => (
-            <button
-              key={String(c._id)}
-              type="button"
-              className={`admin-customer-history-item ${String(selectedCallbackId) === String(c._id) ? "selected" : ""}`}
-              onClick={() => onSelectCallback(c)}
-            >
-              {c.ticketNumber || callbackReference(String(c._id))} ·{" "}
-              {c.createdAt ? new Date(c.createdAt).toLocaleString() : "—"} ·{" "}
-              <span style={{ color: callbackStatusColor(c.status) }}>{callbackStatusLabel(c.status)}</span>
-            </button>
-          ))}
+          <p className="admin-customer-history-section__label">Callback requests ({callbacks.length})</p>
+          <ul className="admin-customer-history-list">
+            {callbacks.map((c) => {
+              const status = c.status === "COMPLETED" ? "RESOLVED" : c.status;
+              return (
+                <li key={String(c._id)}>
+                  <button
+                    type="button"
+                    className={`admin-customer-history-item${String(selectedCallbackId) === String(c._id) ? " selected" : ""}`}
+                    onClick={() => onSelectCallback(c)}
+                  >
+                    <span className="admin-customer-history-item__id">
+                      {c.ticketNumber || callbackReference(String(c._id))}
+                    </span>
+                    <span className="admin-customer-history-item__meta">
+                      {c.createdAt
+                        ? new Date(c.createdAt).toLocaleString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })
+                        : "—"}
+                    </span>
+                    <span
+                      className="admin-customer-history-item__status"
+                      style={{
+                        color: callbackStatusColor(status),
+                        background: `${callbackStatusColor(status)}18`,
+                        borderColor: `${callbackStatusColor(status)}40`,
+                      }}
+                    >
+                      {callbackStatusLabel(status)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ) : null}
       {onSelectTicket && tickets.length > 0 ? (
         <div className="admin-customer-history-section">
-          <p>Support tickets ({tickets.length})</p>
-          {tickets.map((t) => (
-            <button
-              key={String(t._id)}
-              type="button"
-              className={`admin-customer-history-item ${String(selectedTicketId) === String(t._id) ? "selected" : ""}`}
-              onClick={() => onSelectTicket(t)}
-            >
-              {t.ticketNumber} · {t.subject} ·{" "}
-              <span style={{ color: statusColor(t.status) }}>{statusLabel(t.status)}</span>
-            </button>
-          ))}
+          <p className="admin-customer-history-section__label">Support tickets ({tickets.length})</p>
+          <ul className="admin-customer-history-list">
+            {tickets.map((t) => {
+              const color = statusColor(t.status);
+              return (
+                <li key={String(t._id || t.id)}>
+                  <button
+                    type="button"
+                    className={`admin-customer-history-item${String(selectedTicketId) === String(t._id || t.id) ? " selected" : ""}`}
+                    onClick={() => onSelectTicket(t)}
+                  >
+                    <span className="admin-customer-history-item__id">{t.ticketNumber || "—"}</span>
+                    <span className="admin-customer-history-item__meta" title={t.subject || undefined}>
+                      {t.subject || "Untitled"}
+                    </span>
+                    <span
+                      className="admin-customer-history-item__status"
+                      style={{
+                        color,
+                        background: `${color}18`,
+                        borderColor: `${color}40`,
+                      }}
+                    >
+                      {statusLabel(t.status)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ) : null}
     </div>
@@ -281,8 +327,15 @@ function CallbackDetailSheet({
   onSendCustomerSms: () => void;
   onChangeTicketStatus: (s: string) => void;
 }) {
+  const closeSafely = () => {
+    // Defer unmount so the same click can't fall through onto "Raise ticket" behind the sheet.
+    window.setTimeout(() => onClose(), 0);
+  };
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeSafely();
+    };
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
@@ -290,27 +343,64 @@ function CallbackDetailSheet({
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onClose]);
 
+  const statusValue = selected.status === "COMPLETED" ? "RESOLVED" : selected.status;
+  const statusColorValue = callbackStatusColor(statusValue);
+
   const modal = (
-    <div className="tdm" role="dialog" aria-modal="true">
-      <button type="button" className="tdm__backdrop" onClick={onClose} aria-label="Close" />
-      <div className="tdm__sheet">
+    <div className="tdm" role="dialog" aria-modal="true" aria-labelledby="hs-callback-detail-title">
+      <button
+        type="button"
+        className="tdm__backdrop"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          closeSafely();
+        }}
+        aria-label="Close"
+      />
+      <div className="tdm__sheet" onMouseDown={(e) => e.stopPropagation()}>
         <div className="tdp admin-call-detail">
-          <header className="tdp__header">
-            <div className="admin-call-detail-head" style={{ border: "none", padding: 0, margin: 0 }}>
+          <header className="tdp__header admin-call-detail__header">
+            <div className="admin-call-detail-head">
               <span className="admin-customer-avatar admin-customer-avatar--lg" aria-hidden>
                 {customerInitials(selected.callerName)}
               </span>
               <div className="admin-call-detail-title">
-                <h2 style={{ margin: 0 }}>{callbackReference(String(selected._id))}</h2>
+                <div className="admin-call-detail-title__row">
+                  <h2 id="hs-callback-detail-title">{callbackReference(String(selected._id))}</h2>
+                  <span
+                    className="admin-call-detail__status-pill"
+                    style={{
+                      color: statusColorValue,
+                      background: `${statusColorValue}18`,
+                      borderColor: `${statusColorValue}40`,
+                    }}
+                  >
+                    {callbackStatusLabel(statusValue)}
+                  </span>
+                </div>
                 <p className="tdp__header-meta">
-                  {selected.callerName} · {selected.phone}
-                  {selected.callerEmail ? ` · ${selected.callerEmail}` : ""}
+                  <strong>{selected.callerName || "Unknown"}</strong>
+                  {selected.phone ? <span>{selected.phone}</span> : null}
+                  {selected.callerEmail ? <span>{selected.callerEmail}</span> : null}
                 </p>
               </div>
             </div>
-            <button type="button" className="tdp__close" onClick={onClose}>Close</button>
+            <button
+              type="button"
+              className="tdp__close"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                closeSafely();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              Close
+            </button>
           </header>
 
           <div className="tdp__tabs" role="tablist">
@@ -335,6 +425,37 @@ function CallbackDetailSheet({
                     This is a <strong>callback request only</strong> — not a support ticket yet. Use <strong>Create ticket</strong> after the call if you need follow-up.
                   </div>
                 ) : null}
+
+                <div className="admin-call-meta-cards">
+                  <div className="admin-call-meta-card">
+                    <span className="admin-call-meta-card__label">Queue</span>
+                    <span className="admin-call-meta-card__value">#{selected.queuePosition ?? "—"}</span>
+                  </div>
+                  <div className="admin-call-meta-card">
+                    <span className="admin-call-meta-card__label">Consumer</span>
+                    <span className="admin-call-meta-card__value">{selected.consumerType || "—"}</span>
+                  </div>
+                  <div className="admin-call-meta-card">
+                    <span className="admin-call-meta-card__label">Requested</span>
+                    <span className="admin-call-meta-card__value">
+                      {selected.createdAt
+                        ? new Date(selected.createdAt).toLocaleString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })
+                        : "—"}
+                    </span>
+                  </div>
+                  {linkedTicket ? (
+                    <div className="admin-call-meta-card">
+                      <span className="admin-call-meta-card__label">Ticket</span>
+                      <span className="admin-call-meta-card__value">{ticketDetail.ticket.ticketNumber}</span>
+                    </div>
+                  ) : null}
+                </div>
+
                 <CustomerHistoryBlock
                   history={customerHistory}
                   selectedCallbackId={String(selected._id)}
@@ -342,27 +463,22 @@ function CallbackDetailSheet({
                   onSelectCallback={onSelectCallback}
                   onSelectTicket={onOpenCustomerTicket}
                 />
-                <div className="admin-ticket-info-grid">
-                  <p><b>Callback ref:</b> {callbackReference(String(selected._id))}</p>
-                  <p><b>Queue:</b> #{selected.queuePosition}</p>
-                  <p><b>Consumer:</b> {selected.consumerType}</p>
-                  <p><b>Status:</b> {callbackStatusLabel(selected.status)}</p>
-                  <p><b>Requested:</b> {selected.createdAt ? new Date(selected.createdAt).toLocaleString() : "—"}</p>
-                  {linkedTicket ? <p><b>Support ticket:</b> {ticketDetail.ticket.ticketNumber}</p> : null}
-                </div>
-                <div className="admin-status-change">
-                  <label>Callback status:</label>
+
+                <div className="admin-status-change admin-status-change--card">
+                  <label htmlFor="hs-callback-status">Callback status</label>
                   <select
-                    value={selected.status === "COMPLETED" ? "RESOLVED" : selected.status}
+                    id="hs-callback-status"
+                    value={statusValue}
                     onChange={(e) => onUpdateCallbackStatus(e.target.value)}
                   >
                     {CALLBACK_STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
                   </select>
                 </div>
+
                 <div className="admin-call-actions admin-call-actions--sticky">
                   <button
                     type="button"
-                    className="admin-btn-accept admin-btn-accept-full"
+                    className="admin-btn-accept"
                     disabled={!adminOnline || callInProgress || (useSoftphone && softphoneState !== "ready")}
                     onClick={onInitiateCall}
                   >
@@ -398,31 +514,37 @@ function CallbackDetailSheet({
                     <textarea rows={3} value={smsPreview} onChange={(e) => setSmsPreview(e.target.value)} maxLength={320} />
                     <button type="button" className="admin-btn-sm" onClick={onSendCustomerSms} disabled={!smsPreview.trim()}>Send SMS to {selected.phone}</button>
                   </div>
-                ) : null}
-                {actionStatus ? <p className="admin-action-status">{actionStatus}</p> : null}
+                ) : <p className="admin-hint">No phone on file for this customer.</p>}
               </>
             )}
-            {detailTab === "ticket" && linkedTicket && ticketDetail?.ticket && (
+            {detailTab === "ticket" && linkedTicket && ticketDetail?.ticket ? (
               <>
-                <h3>{ticketDetail.ticket.ticketNumber}</h3>
                 <div className="admin-ticket-info-grid">
-                  <p><b>Subject:</b> {ticketDetail.ticket.subject}</p>
-                  <p><b>Category:</b> {ticketDetail.ticket.category}</p>
-                  <p><b>Ticket status:</b> <span style={{ color: statusColor(ticketDetail.ticket.status) }}>{statusLabel(ticketDetail.ticket.status)}</span></p>
+                  <p><b>Ticket:</b> {ticketDetail.ticket.ticketNumber}</p>
+                  <p><b>Status:</b> {statusLabel(ticketDetail.ticket.status)}</p>
+                  <p><b>Subject:</b> {ticketDetail.ticket.subject || "—"}</p>
+                  <p><b>Priority:</b> {ticketDetail.ticket.priority || "—"}</p>
                 </div>
-                <div className="admin-ticket-desc">{ticketDetail.ticket.description}</div>
-                <div className="admin-status-change">
-                  <label>Update ticket status:</label>
-                  <select value={ticketDetail.ticket.status} onChange={(e) => onChangeTicketStatus(e.target.value)}>
+                <div className="admin-status-change admin-status-change--card">
+                  <label htmlFor="hs-ticket-status">Ticket status</label>
+                  <select
+                    id="hs-ticket-status"
+                    value={ticketDetail.ticket.status}
+                    onChange={(e) => onChangeTicketStatus(e.target.value)}
+                  >
                     {TICKET_STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
                   </select>
-                </div>
-                <div className="admin-notify-options">
-                  <label><input type="checkbox" checked={notifyEmail} onChange={(e) => setNotifyEmail(e.target.checked)} /> Email on status change</label>
-                  <label><input type="checkbox" checked={notifySms} onChange={(e) => setNotifySms(e.target.checked)} /> SMS on status change</label>
+                  <label className="admin-inline-check">
+                    <input type="checkbox" checked={notifyEmail} onChange={(e) => setNotifyEmail(e.target.checked)} />
+                    Notify email
+                  </label>
+                  <label className="admin-inline-check">
+                    <input type="checkbox" checked={notifySms} onChange={(e) => setNotifySms(e.target.checked)} />
+                    Notify SMS
+                  </label>
                 </div>
               </>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
@@ -669,7 +791,10 @@ export function CallManagementModule({ agentUser = null }: { agentUser?: AgentUs
     });
   };
 
+  const raiseTicketGuardUntil = useRef(0);
+
   const openCallCreateTicket = () => {
+    if (Date.now() < raiseTicketGuardUntil.current) return;
     if (selected) {
       setRaiseCallbackId(String(selected._id));
       setRaiseForm({
@@ -695,6 +820,7 @@ export function CallManagementModule({ agentUser = null }: { agentUser?: AgentUs
   };
 
   const handleNavRaiseTicket = () => {
+    if (Date.now() < raiseTicketGuardUntil.current) return;
     openCallCreateTicket();
   };
 
@@ -964,7 +1090,7 @@ export function CallManagementModule({ agentUser = null }: { agentUser?: AgentUs
                     <p className="hs-call-dashboard__recent-sub">
                       Users who submitted <strong>name + phone</strong> on Help &amp; Support → Request call.
                       {agentOnlineForNav
-                        ? " You are online — use Call back or change status on each row."
+                        ? " You are online — call back or update status from the dropdown."
                         : " Go online on the softphone above to call back."}
                       {stats.dialingCallbacks > 0 ? ` · ${stats.dialingCallbacks} in progress` : ""}
                     </p>
@@ -1143,7 +1269,12 @@ export function CallManagementModule({ agentUser = null }: { agentUser?: AgentUs
           setNotifyEmail={setNotifyEmail}
           notifySms={notifySms}
           setNotifySms={setNotifySms}
-          onClose={() => { setSelected(null); setTicketDetail(null); setActionStatus(""); }}
+          onClose={() => {
+            raiseTicketGuardUntil.current = Date.now() + 400;
+            setSelected(null);
+            setTicketDetail(null);
+            setActionStatus("");
+          }}
           onUpdateCallbackStatus={(s) => void updateCallbackStatus(s)}
           onInitiateCall={() => void initiateCall()}
           onOpenCallCreateTicket={openCallCreateTicket}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -394,9 +394,9 @@ export function AdminDashboard() {
                     <IconChart size={22} />
                   </div>
                   <div className="hs-admin__header-text">
-                    <span className="hs-admin__header-eyebrow">Help &amp; Support</span>
+                    <span className="hs-admin__header-eyebrow">SaarthiWorkforce · Help &amp; Support</span>
                     <h1 className="hs-admin__title">Status &amp; Tracking</h1>
-                    <p className="hs-admin__subtitle">All tickets — pending, open, resolved and closed.</p>
+                    <p className="hs-admin__subtitle">Monitor every ticket across channels — open, in progress, escalated, and resolved.</p>
                   </div>
                 </div>
                 <div className="hs-admin__header-actions">

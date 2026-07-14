@@ -1192,16 +1192,27 @@ a.hs-tech-card__contact:hover {
 }
 
 .hs-escalated-customer__name {
-  font-size: 0.8375rem;
-  font-weight: 650;
-  color: #0f172a;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #1a2332;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hs-escalated-customer__meta {
+  min-width: 0;
+  flex: 1;
 }
 
 .hs-escalated-customer__email {
-  font-size: 0.7rem;
-  color: #94a3b8;
-  word-break: break-all;
-  margin-top: 0.1rem;
+  font-size: 0.68rem;
+  color: #64748b;
+  margin-top: 0.12rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
 }
 
 .hs-escalated-subject {
@@ -1817,4 +1828,148 @@ a.hs-tech-card__contact:hover {
   .hs-escalated-table-wrap {
     padding: 0.5rem 0.65rem 1rem !important;
   }
+}
+
+/* -- Clean escalated table (SaarthiWorkforce) --------------------- */
+.hs-escalated-table {
+  min-width: 980px !important;
+  table-layout: fixed;
+}
+
+.hs-escalated-table .hs-esc-col-id { width: 7.25rem; }
+.hs-escalated-table .hs-esc-col-customer { width: 16rem; }
+.hs-escalated-table .hs-esc-col-subject { width: 14rem; }
+.hs-escalated-table .hs-esc-col-assignee { width: 12.5rem; }
+.hs-escalated-table .hs-esc-col-priority { width: 6.5rem; }
+.hs-escalated-table .hs-esc-col-when { width: 7.5rem; }
+.hs-escalated-table .hs-esc-col-status { width: 7.25rem; }
+.hs-escalated-table .hs-esc-col-action { width: 6.5rem; }
+
+.hs-escalated-table thead th {
+  background: linear-gradient(180deg, #f4f7fb 0%, #eef3f8 100%) !important;
+  color: #1e3a5f !important;
+  font-weight: 800 !important;
+  border-bottom: 1px solid rgba(49, 112, 165, 0.12) !important;
+  box-shadow: none !important;
+}
+
+.hs-escalated-table tbody td {
+  padding: 0.85rem 0.9rem !important;
+  vertical-align: middle !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+.hs-escalated-customer {
+  max-width: 100% !important;
+  gap: 0.6rem !important;
+}
+
+.hs-escalated-customer__meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.hs-escalated-customer__name {
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  color: #1a2332 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.hs-escalated-customer__email {
+  font-size: 0.65rem !important;
+  color: #64748b !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  word-break: normal !important;
+}
+
+.hs-escalated-subject {
+  display: block !important;
+  -webkit-line-clamp: unset !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: 0.8rem !important;
+  color: #334155 !important;
+}
+
+.hs-escalated-assignee-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hs-escalated-assignee {
+  max-width: 100%;
+  font-size: 0.7rem !important;
+}
+
+.hs-escalated-assignee__name {
+  display: inline-block;
+  max-width: 8.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hs-escalated-designation {
+  display: block;
+  max-width: 100%;
+  font-size: 0.62rem !important;
+  color: #64748b !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hs-escalated-when {
+  white-space: nowrap;
+  font-size: 0.7rem;
+  color: #5c6675;
+}
+
+.hs-escalated-view-btn {
+  border-radius: 0.55rem !important;
+  background: linear-gradient(135deg, #1e3a5f, #3170a5) !important;
+  box-shadow: 0 2px 8px rgba(30, 58, 95, 0.22) !important;
+  padding: 0.4rem 0.7rem !important;
+}
+
+.hs-escalated-view-btn:hover {
+  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3) !important;
+}
+
+.hs-escalated-view-btn--assign {
+  background: linear-gradient(135deg, #b91c1c, #ea580c) !important;
+  box-shadow: 0 2px 8px rgba(185, 28, 28, 0.22) !important;
+}
+
+.hs-escalated-priority--medium {
+  background: #eff6ff !important;
+  color: #1e3a5f !important;
+  border-color: rgba(49, 112, 165, 0.25) !important;
+}
+
+.hs-admin__header--escalated {
+  background:
+    radial-gradient(ellipse 50% 90% at 0% 0%, rgba(185, 28, 28, 0.06), transparent 55%),
+    linear-gradient(125deg, #ffffff 0%, #fff7f7 48%, #f8fafc 100%) !important;
+}
+
+.hs-admin__header--escalated .hs-admin__header-accent {
+  background: linear-gradient(90deg, #1e3a5f 0%, #3170a5 45%, #b91c1c 100%) !important;
+}
+
+.hs-admin__header-icon--escalated {
+  background: linear-gradient(135deg, #1e3a5f, #b91c1c) !important;
+  box-shadow: 0 6px 16px rgba(30, 58, 95, 0.28) !important;
 }

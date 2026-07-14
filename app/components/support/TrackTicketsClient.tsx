@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { appPath } from "@/lib/apiBase";
 import { resolveSupportAuth } from "@/lib/resolveSupportAuth";
-import { syncWorkforceAuthToHelp } from "@/lib/workforceSync";
+import { syncWorkforceAuthFromPage } from "@/lib/workforceSync";
 import { supportApi } from "@/lib/supportApi";
 import { channelLabel, statusColor, statusLabel } from "@/lib/ticketConstants";
 import { TicketAnalyticsCharts } from "./TicketAnalyticsCharts";
@@ -86,7 +86,7 @@ export function TrackTicketsClient() {
   }, []);
 
   useEffect(() => {
-    void syncWorkforceAuthToHelp();
+    void syncWorkforceAuthFromPage();
   }, []);
 
   const showToast = (msg: string) => {

@@ -3,17 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { appPath } from "@/lib/apiBase";
-import { getAuthFromStorage, type GuestUser } from "@/lib/auth";
+import type { GuestUser } from "@/lib/auth";
 import { supportApi } from "@/lib/supportApi";
 import { SUPPORT_EMAIL, resolveConsumerType } from "@/lib/supportConstants";
+import { SupportAuthGuard } from "../../components/support/SupportAuthGuard";
 import "../../components/support/help.css";
 
-export default function EmailSupportPage() {
-  const [user, setUser] = useState<GuestUser | null>(null);
+function EmailSupportForm({ user }: { user: GuestUser }) {
   const [supportEmail, setSupportEmail] = useState(SUPPORT_EMAIL);
   const [form, setForm] = useState({
-    name: "",
-    email: "",
+    name: user.fullName || "",
+    email: user.email || "",
     phone: "",
     subject: "",
     message: "",
@@ -23,15 +23,6 @@ export default function EmailSupportPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const { user: stored } = getAuthFromStorage();
-    setUser(stored);
-    if (stored) {
-      setForm((f) => ({
-        ...f,
-        name: f.name || stored.fullName || "",
-        email: f.email || stored.email || "",
-      }));
-    }
     supportApi
       .getSupportConfig()
       .then((c) => {
@@ -115,7 +106,7 @@ export default function EmailSupportPage() {
               <div className="sx-form-card">
                 <h2>Send a message</h2>
                 <p className="sx-form-sub">
-                  Your email will be sent to <b>{supportEmail}</b>
+                  Signed in as <b>{user.email}</b> · sending to <b>{supportEmail}</b>
                 </p>
 
                 <form onSubmit={submit}>
@@ -189,5 +180,13 @@ export default function EmailSupportPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EmailSupportPage() {
+  return (
+    <SupportAuthGuard featureLabel="email support" returnPath="/help-and-support/email-support">
+      {(auth) => <EmailSupportForm user={auth.user!} />}
+    </SupportAuthGuard>
   );
 }

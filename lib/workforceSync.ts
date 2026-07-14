@@ -21,12 +21,17 @@ function parseUserType(userType?: string): { accountType: GuestUser["accountType
   return { accountType: "EMPLOYEE", currentRole: "EMPLOYEE" };
 }
 
-/** Exchange TalentX / Employeemanage org JWT for a Help & Support session (port 3003). */
+/**
+ * Exchange TalentX / Employeemanage org JWT for a Help & Support session.
+ * When `input.token` is present (URL SSO handoff), always re-sync so a stale guest
+ * session cannot block the workforce identity.
+ */
 export async function syncWorkforceAuthToHelp(input?: WorkforceSyncInput): Promise<boolean> {
   if (typeof window === "undefined") return false;
 
+  const forceFromSso = Boolean(input?.token?.trim());
   const existing = getAuthFromStorage();
-  if (existing.token && existing.user) return true;
+  if (!forceFromSso && existing.token && existing.user) return true;
 
   let token = input?.token?.trim() || "";
   let email = input?.email?.trim() || "";
@@ -77,7 +82,10 @@ export async function syncWorkforceAuthToHelp(input?: WorkforceSyncInput): Promi
         accountType,
       }),
     });
-    if (!res.ok) return false;
+    if (!res.ok) {
+      console.warn("[workforce-sync] failed", res.status, await res.text().catch(() => ""));
+      return false;
+    }
 
     const data = await res.json();
     const user = data.user as GuestUser;
@@ -100,7 +108,8 @@ export async function syncWorkforceAuthToHelp(input?: WorkforceSyncInput): Promi
     window.dispatchEvent(new Event("jbv2-org-auth-changed"));
     window.dispatchEvent(new Event("workforce-help-sync-done"));
     return true;
-  } catch {
+  } catch (err) {
+    console.warn("[workforce-sync] error", err);
     return false;
   }
 }
@@ -128,6 +137,14 @@ export function stripWorkforceSsoFromUrl() {
   params.delete("name");
   params.delete("userType");
   const qs = params.toString();
-  const next = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
+  const next = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash || ""}`;
   window.history.replaceState({}, "", next);
+}
+
+/** Sync using URL SSO params if present, otherwise org localStorage / existing session. */
+export async function syncWorkforceAuthFromPage(): Promise<boolean> {
+  const fromUrl = readWorkforceSsoFromUrl();
+  const ok = await syncWorkforceAuthToHelp(fromUrl || undefined);
+  if (ok && fromUrl) stripWorkforceSsoFromUrl();
+  return ok;
 }

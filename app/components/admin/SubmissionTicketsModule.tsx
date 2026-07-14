@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { supportApi } from "@/lib/supportApi";
-import { CONSUMER_TYPES, SUPPORT_EMAIL } from "@/lib/supportConstants";
+import { CONSUMER_TYPES } from "@/lib/supportConstants";
 import { TICKET_CHANNELS, TICKET_STATUSES, statusLabel, statusColor } from "@/lib/ticketConstants";
-import { IconCalendar, IconChevronRightSmall, IconDownload, IconFilter, IconForm, IconInbox, IconMail, IconPhone, IconSearch, IconTag, IconTicket, IconUser } from "./AdminIcons";
+import { IconCalendar, IconChevronRightSmall, IconDownload, IconFilter, IconForm, IconMail, IconPhone, IconSearch, IconTag, IconTicket, IconUser } from "./AdminIcons";
 import { ClientDateTime } from "./ClientDateTime";
 import { TicketDetailPanel } from "./TicketDetailPanel";
 import "./manage-email.css";
@@ -126,46 +126,6 @@ function SubmissionKpi({ label, value, tone = "primary", highlight = false }: {
     <div className={`hs-sub-kpi hs-sub-kpi--${tone}${highlight ? " is-highlight" : ""}`}>
       <span className="hs-sub-kpi__value">{value}</span>
       <span className="hs-sub-kpi__label">{label}</span>
-    </div>
-  );
-}
-
-function ManageEmailInboxBar({ ticketCount, onRefresh }: { ticketCount: number; onRefresh: () => void }) {
-  const [config, setConfig] = useState<any>(null);
-
-  useEffect(() => {
-    supportApi.getSupportConfig().then(setConfig).catch(() => setConfig(null));
-  }, []);
-
-  const inbox = config?.supportEmail || SUPPORT_EMAIL;
-  const smtpOk = config?.mailConfigured;
-
-  return (
-    <div className="hs-inbox-bar">
-      <div className="hs-inbox-bar__info">
-        <IconInbox size={18} />
-        <div>
-          <strong>Inbound mailbox: {inbox}</strong>
-          <p>
-            Outbound {smtpOk ? "(Brevo/SMTP)" : "(not configured)"}
-            {" · "}
-            Customer emails to the inbox create support tickets
-            {ticketCount > 0 && <> · {ticketCount} email ticket{ticketCount !== 1 ? "s" : ""} in queue</>}
-          </p>
-        </div>
-      </div>
-      <div className="hs-inbox-bar__actions">
-        <span className={`hs-inbox-bar__badge${smtpOk ? " hs-inbox-bar__badge--ok" : " hs-inbox-bar__badge--warn"}`}>
-          {smtpOk ? "Outbound ready" : "Mail not configured"}
-        </span>
-        <span className="hs-inbox-bar__badge hs-inbox-bar__badge--ok">OK</span>
-        <button type="button" className="hs-btn hs-btn--ghost" disabled title="Configure BREVO_API_KEY in server .env">
-          Test SMTP
-        </button>
-        <button type="button" className="hs-btn hs-btn--primary" onClick={onRefresh}>
-          Sync inbox now
-        </button>
-      </div>
     </div>
   );
 }
@@ -518,10 +478,6 @@ export function SubmissionTicketsModule({
 
   return (
     <>
-      {variant === "email" && (
-        <ManageEmailInboxBar ticketCount={tickets.length} onRefresh={() => void load()} />
-      )}
-
       <div className="hs-submissions-panel-wrap">
         <div className={`hs-submissions-panel hs-submissions-panel--${variant}`}>
           {variant !== "agent-raised" && variant !== "email" && variant !== "call" ? (
