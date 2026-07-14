@@ -100,6 +100,9 @@ export function readEnv() {
     supportEmailTo: mail.supportEmailTo,
     mailProvider: mail.mailProvider,
     brevoApiKey: pick("BREVO_API_KEY"),
+    /** Gmail app password — used as last-resort SMTP if Brevo IP/SMTP auth fails */
+    gmailSmtpUser: pick("GMAIL_SMTP_USER", "SUPPORT_IMAP_USERNAME", "APP_MAIL_FROM"),
+    gmailSmtpPass: pick("GMAIL_APP_PASSWORD", "SUPPORT_IMAP_PASSWORD").replace(/\s+/g, ""),
 
     twilioAccountSid: pick("TWILIO_ACCOUNT_SID"),
     twilioAuthToken: pick("TWILIO_AUTH_TOKEN"),
@@ -131,8 +134,13 @@ export function isSmtpConfigured(): boolean {
   return Boolean(e.mailUser && e.mailPass && e.mailFrom);
 }
 
+export function isGmailSmtpConfigured(): boolean {
+  const e = readEnv();
+  return Boolean(e.gmailSmtpUser && e.gmailSmtpPass && e.mailFrom);
+}
+
 export function isMailConfigured(): boolean {
-  return isBrevoApiConfigured() || isSmtpConfigured();
+  return isBrevoApiConfigured() || isSmtpConfigured() || isGmailSmtpConfigured();
 }
 
 export function isTwilioSmsConfigured(): boolean {

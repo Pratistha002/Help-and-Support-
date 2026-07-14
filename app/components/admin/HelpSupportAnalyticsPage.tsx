@@ -9,11 +9,11 @@ import { HelpSupportNotificationBell } from "./HelpSupportNotificationBell";
 import "./help-support-analytics.css";
 
 const CHANNEL_META: Record<string, { label: string; color: string }> = {
-  TICKET_FORM: { label: "Support Form", color: "#6366f1" },
+  TICKET_FORM: { label: "Support Form", color: "#3170a5" },
   EMAIL: { label: "Email", color: "#3b82f6" },
   CALL: { label: "Call", color: "#f97316" },
   LIVE_CHAT: { label: "Live Chat", color: "#0d9488" },
-  ADMIN_RAISED: { label: "Live Agent", color: "#7c3aed" },
+  ADMIN_RAISED: { label: "Live Agent", color: "#1e3a5f" },
 };
 
 const EXCLUDED_CHANNELS = new Set(["SMS", "WHATSAPP", "AI_CHAT"]);

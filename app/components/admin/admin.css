@@ -766,6 +766,31 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
 }
 
+.me-module-toolbar__icon--email {
+  background: linear-gradient(135deg, #ea580c 0%, #3170a5 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(49, 112, 165, 0.3);
+}
+
+.me-module-toolbar__icon--agent {
+  background: linear-gradient(135deg, #1e3a5f 0%, #3170a5 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.32);
+}
+
+.me-module-toolbar .me-module-toolbar__brand > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.me-module-toolbar {
+  padding: 0.85rem 1.25rem;
+  align-items: center;
+}
+
+
 .admin-workspace--live-chat {
   flex: 1 1 auto;
   min-height: 0;
@@ -1172,7 +1197,7 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
-.admin-action-status { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #eff6ff; color: #4338ca; font-size: 13px; font-weight: 600; }
+.admin-action-status { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #eff6ff; color: #1e3a5f; font-size: 13px; font-weight: 600; }
 .admin-customer-history {
   margin: 16px 0;
   padding: 14px;
@@ -1379,7 +1404,7 @@
   padding: 2px 8px;
   border-radius: 999px;
   background: #eff6ff;
-  color: #4338ca;
+  color: #1e3a5f;
   font-weight: 800;
 }
 
@@ -1469,7 +1494,7 @@
   color: #64748b;
   cursor: pointer;
 }
-.admin-detail-tabs button.active { background: #fff; color: #4338ca; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.admin-detail-tabs button.active { background: #fff; color: #1e3a5f; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 
 .admin-call-actions--sticky { position: sticky; bottom: 0; background: #fff; padding-top: 8px; }
 
@@ -1513,7 +1538,7 @@
   background: #eff6ff;
 }
 .admin-softphone--compact .admin-softphone-dot { margin-top: 0; width: 10px; height: 10px; }
-.admin-softphone-compact-label { font-size: 12px; font-weight: 700; color: #4338ca; white-space: nowrap; }
+.admin-softphone-compact-label { font-size: 12px; font-weight: 700; color: #1e3a5f; white-space: nowrap; }
 .admin-softphone--compact .admin-softphone-error { font-size: 11px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-softphone-controls--inline { display: inline-flex; gap: 6px; margin: 0; }
 
@@ -1612,7 +1637,7 @@
 }
 .admin-status-row { cursor: pointer; transition: background 0.12s; }
 .admin-status-row.selected { background: #eff6ff; box-shadow: inset 3px 0 0 #3170a5; }
-.admin-status-row.selected .admin-ticket-num-inline { color: #4338ca; }
+.admin-status-row.selected .admin-ticket-num-inline { color: #1e3a5f; }
 @media (max-width: 1024px) {
   .admin-status-split { grid-template-columns: 1fr; }
   .admin-status-split .admin-status-table-wrap { border-right: none; border-bottom: 1px solid #e8ecf2; max-height: 320px; }

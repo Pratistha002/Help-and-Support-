@@ -1,0 +1,49 @@
+# Production overlay for Help & Support (SaarthiWorkforce).
+# Usage (on the VPS):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d web
+# Or:
+#   ./scripts/deploy-production.sh
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPPORT_EMAIL: ${NEXT_PUBLIC_SUPPORT_EMAIL:-Saarthiworkforce@gmail.com}
+        NEXT_PUBLIC_SUPPORT_PHONE_DISPLAY: ${NEXT_PUBLIC_SUPPORT_PHONE_DISPLAY:-+1 878 732 2485}
+        NEXT_PUBLIC_SUPPORT_PHONE_E164: ${NEXT_PUBLIC_SUPPORT_PHONE_E164:-+18787322485}
+        NEXT_PUBLIC_WORKFORCE_APP_URL: ${NEXT_PUBLIC_WORKFORCE_APP_URL:-https://saarthix.com}
+        NEXT_PUBLIC_SAARTHIX_URL: ${NEXT_PUBLIC_SAARTHIX_URL:-https://saarthix.com}
+        NEXT_PUBLIC_INTERVIEWX_ORIGIN: ${NEXT_PUBLIC_INTERVIEWX_ORIGIN:-}
+        NEXT_PUBLIC_HELP_SUPPORT_URL: ${NEXT_PUBLIC_HELP_SUPPORT_URL:-}
+    restart: always
+    ports:
+      - "${HELP_SUPPORT_HOST_PORT:-3003}:3003"
+    env_file:
+      - ${HELP_SUPPORT_ENV_FILE:-.env}
+    environment:
+      NODE_ENV: production
+      # Prefer values from .env; override local defaults here if unset.
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS}
+      MONGODB_URI: ${MONGODB_URI}
+      SUPPORT_MONGODB_DATABASE: ${SUPPORT_MONGODB_DATABASE:-}
+      SUPPORT_WEBHOOK_BASE_URL: ${SUPPORT_WEBHOOK_BASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      ORG_AUTH_JWT_SECRET: ${ORG_AUTH_JWT_SECRET:-}
+      HELP_AGENT_PASSWORD: ${HELP_AGENT_PASSWORD}
+      NEXT_PUBLIC_WORKFORCE_APP_URL: ${NEXT_PUBLIC_WORKFORCE_APP_URL}
+      NEXT_PUBLIC_SUPPORT_EMAIL: ${NEXT_PUBLIC_SUPPORT_EMAIL}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-qO-",
+          "http://127.0.0.1:3003/",
+        ]
+      interval: 20s
+      timeout: 8s
+      retries: 8
+      start_period: 40s

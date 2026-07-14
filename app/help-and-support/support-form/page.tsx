@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { appPath } from "@/lib/apiBase";
-import { getAuthFromStorage } from "@/lib/auth";
+import { getAuthFromStorage, type GuestUser } from "@/lib/auth";
 import { supportApi } from "@/lib/supportApi";
 import { resolveConsumerType } from "@/lib/supportConstants";
 import "../../components/support/help.css";
@@ -18,10 +18,11 @@ const CATEGORIES = [
 ];
 
 export default function SupportFormPage() {
-  const { token, user } = getAuthFromStorage();
+  const [token, setToken] = useState("");
+  const [user, setUser] = useState<GuestUser | null>(null);
   const [form, setForm] = useState({
-    name: user?.fullName || "",
-    email: user?.email || "",
+    name: "",
+    email: "",
     phone: "",
     subject: "",
     description: "",
@@ -30,6 +31,19 @@ export default function SupportFormPage() {
   const [done, setDone] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const stored = getAuthFromStorage();
+    setToken(stored.token);
+    setUser(stored.user);
+    if (stored.user) {
+      setForm((f) => ({
+        ...f,
+        name: f.name || stored.user?.fullName || "",
+        email: f.email || stored.user?.email || "",
+      }));
+    }
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

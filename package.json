@@ -10,6 +10,10 @@
     "docker:down": "docker compose down",
     "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "docker:logs": "docker compose logs -f web",
+    "docker:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d web",
+    "deploy:prod": "bash scripts/deploy-production.sh",
+    "deploy:prod:win": "powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1",
+    "verify:prod": "bash scripts/verify-production.sh",
     "generate:faq-pdf": "node scripts/generate-faq-pdf.mjs",
     "db:clear-workforce": "node scripts/clear-workforce-support-data.mjs"
   },
@@ -24,7 +28,8 @@
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.3.1",
-    "twilio": "^5.4.0"
+    "twilio": "^5.4.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^22.5.5",

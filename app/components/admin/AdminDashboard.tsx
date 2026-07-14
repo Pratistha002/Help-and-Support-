@@ -313,9 +313,14 @@ export function AdminDashboard() {
           {activeModule === "manage-email" ? (
             <div className="me-module-toolbar">
               <div className="me-module-toolbar__brand">
-                <p className="me-module-toolbar__eyebrow">HELP &amp; SUPPORT</p>
-                <h2>Manage Email</h2>
-                <p className="me-module-toolbar__sub">Inbound emails to {SUPPORT_EMAIL}</p>
+                <span className="me-module-toolbar__icon me-module-toolbar__icon--email" aria-hidden>
+                  <IconMail size={20} />
+                </span>
+                <div>
+                  <p className="me-module-toolbar__eyebrow">HELP &amp; SUPPORT</p>
+                  <h2>Manage Email</h2>
+                  <p className="me-module-toolbar__sub">Inbound emails to {SUPPORT_EMAIL}</p>
+                </div>
               </div>
               <div className="me-module-toolbar__actions">
                 {auth.user ? (
@@ -332,9 +337,14 @@ export function AdminDashboard() {
           ) : activeModule === "manage-form" ? (
             <div className="me-module-toolbar">
               <div className="me-module-toolbar__brand">
-                <p className="me-module-toolbar__eyebrow">HELP &amp; SUPPORT</p>
-                <h2>Live agent ticket created</h2>
-                <p className="me-module-toolbar__sub">Tickets raised by agents from live chat</p>
+                <span className="me-module-toolbar__icon me-module-toolbar__icon--agent" aria-hidden>
+                  <IconTicket size={20} />
+                </span>
+                <div>
+                  <p className="me-module-toolbar__eyebrow">HELP &amp; SUPPORT</p>
+                  <h2>Live agent ticket created</h2>
+                  <p className="me-module-toolbar__sub">Tickets raised by agents from live chat</p>
+                </div>
               </div>
               <div className="me-module-toolbar__actions">
                 {auth.user ? (
@@ -446,7 +456,7 @@ export function AdminDashboard() {
             {activeModule === "manage-email" && (
               <ManageEmailModule agentUser={auth.user} />
             )}
-            {activeModule === "manage-call" && <CallManagementModule />}
+            {activeModule === "manage-call" && <CallManagementModule agentUser={auth.user} />}
             {activeModule === "manage-form" && (
               <ManageFormModule agentUser={auth.user} />
             )}

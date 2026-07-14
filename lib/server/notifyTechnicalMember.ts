@@ -19,32 +19,35 @@ function buildTechnicalAssignmentEmailBody(opts: {
   escalatedByEmail: string;
   escalationNote?: string | null;
 }) {
-  const lines = [
+  const bodyLines = [
     `Hello ${opts.memberName},`,
     "",
     "A support ticket has been assigned to you for technical resolution.",
     "",
+    "── Ticket details ──",
     `Ticket: ${opts.ticketNumber}`,
     `Subject: ${opts.subject}`,
     `Priority: ${opts.priority}`,
     `Your role: ${opts.role}`,
     "",
-    "Customer details:",
-    `  Name: ${opts.customerName}`,
-    `  Email: ${opts.customerEmail}`,
-    `  Phone: ${opts.customerPhone}`,
-    `  User type: ${opts.consumerType}`,
+    "── Customer details ──",
+    `Name: ${opts.customerName}`,
+    `Email: ${opts.customerEmail}`,
+    `Phone: ${opts.customerPhone}`,
+    `User type: ${opts.consumerType}`,
     "",
-    "Issue description:",
+    "── Issue description ──",
     opts.description,
     "",
-    `Escalated by: ${opts.escalatedByName}${opts.escalatedByEmail && opts.escalatedByEmail !== "—" ? ` (${opts.escalatedByEmail})` : ""}`,
+    "── Assigned by ──",
+    `Name: ${opts.escalatedByName}`,
+    `Email: ${opts.escalatedByEmail && opts.escalatedByEmail !== "—" ? opts.escalatedByEmail : "Not provided"}`,
   ];
   if (opts.escalationNote) {
-    lines.push("", "Escalation note:", opts.escalationNote);
+    bodyLines.push("", "── Escalation note ──", opts.escalationNote);
   }
-  lines.push("", `— ${serverEnv.companyName} Help & Support`);
-  return lines.join("\n");
+  bodyLines.push("", `— ${serverEnv.companyName} Help & Support`);
+  return bodyLines.join("\n");
 }
 
 export async function notifyTechnicalMemberAssigned(
@@ -100,9 +103,12 @@ export async function notifyTechnicalMemberAssigned(
   const phone = normalizeToE164(member.phone || ticket.assignedTechnicalMemberPhone || "");
   if (phone && isTwilioSmsConfigured()) {
     let issue = ticket.subject || "Support ticket";
-    if (issue.length > 45) issue = `${issue.slice(0, 42)}...`;
-    let smsBody = `${serverEnv.companyName}: Ticket ${ticketNumber} assigned to you. ${issue}. Details sent to your email.`;
-    if (smsBody.length > 155) smsBody = `${smsBody.slice(0, 152)}...`;
+    if (issue.length > 40) issue = `${issue.slice(0, 37)}...`;
+    let smsBody =
+      `${serverEnv.companyName}: Ticket ${ticketNumber} assigned to you by ${escalatedByName}` +
+      (escalatedByEmail && escalatedByEmail !== "—" ? ` (${escalatedByEmail})` : "") +
+      `. ${issue}. Full details emailed.`;
+    if (smsBody.length > 300) smsBody = `${smsBody.slice(0, 297)}...`;
     const smsResult = await sendSms(phone, smsBody);
     if (smsResult.ok) {
       result.smsSent = true;

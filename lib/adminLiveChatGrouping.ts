@@ -16,15 +16,15 @@ export type LiveSession = {
 };
 
 export const CHAT_COLOR_PALETTE = [
-  { bg: "#eef2ff", border: "#a5b4fc", accent: "#4f46e5", avatar: "#6366f1" },
-  { bg: "#ecfdf5", border: "#6ee7b7", accent: "#059669", avatar: "#10b981" },
-  { bg: "#fff7ed", border: "#fdba74", accent: "#ea580c", avatar: "#f97316" },
-  { bg: "#fdf2f8", border: "#f9a8d4", accent: "#db2777", avatar: "#ec4899" },
-  { bg: "#f0fdfa", border: "#5eead4", accent: "#0f766e", avatar: "#14b8a6" },
-  { bg: "#fefce8", border: "#fde047", accent: "#ca8a04", avatar: "#eab308" },
-  { bg: "#f5f3ff", border: "#c4b5fd", accent: "#7c3aed", avatar: "#8b5cf6" },
+  { bg: "#eef4fa", border: "#93b8d4", accent: "#3170a5", avatar: "#2c4f72" },
+  { bg: "#ecfdf5", border: "#6ee7b7", accent: "#0d9488", avatar: "#14b8a6" },
+  { bg: "#f0f7fc", border: "#7eb3d4", accent: "#1e3a5f", avatar: "#1e3a5f" },
   { bg: "#eff6ff", border: "#93c5fd", accent: "#2563eb", avatar: "#3b82f6" },
-  { bg: "#fff1f2", border: "#fda4af", accent: "#e11d48", avatar: "#f43f5e" },
+  { bg: "#f0fdfa", border: "#5eead4", accent: "#0f766e", avatar: "#14b8a6" },
+  { bg: "#f8fafc", border: "#cbd5e1", accent: "#475569", avatar: "#64748b" },
+  { bg: "#ecfeff", border: "#67e8f9", accent: "#0891b2", avatar: "#06b6d4" },
+  { bg: "#e0f2fe", border: "#7dd3fc", accent: "#0284c7", avatar: "#0ea5e9" },
+  { bg: "#f1f5f9", border: "#94a3b8", accent: "#334155", avatar: "#475569" },
   { bg: "#f0fdf4", border: "#86efac", accent: "#16a34a", avatar: "#22c55e" },
 ] as const;
 

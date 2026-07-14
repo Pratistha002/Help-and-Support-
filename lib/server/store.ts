@@ -186,7 +186,7 @@ const technicalTeamSchema = new Schema(
     email: { type: String, required: true, lowercase: true, trim: true },
     phone: String,
     designation: String,
-    department: { type: String, default: "Technical Support" },
+    department: { type: String, default: "Product Engineering" },
     specialty: String,
     active: { type: Boolean, default: true },
   },
@@ -495,10 +495,112 @@ function normalizeTechnicalMember(raw: Record<string, unknown>): TechnicalTeamMe
 
 export async function listTechnicalTeam(activeOnly = true) {
   await connectDb();
+  await ensureDefaultTechnicalTeam();
   const { TechnicalTeamMember } = getModels();
   const q = activeOnly ? { active: true } : {};
   const rows = await TechnicalTeamMember.find(q).sort({ name: 1 }).lean();
   return rows.map((m) => normalizeTechnicalMember(m as Record<string, unknown>));
+}
+
+/** Seed default Product Engineering roster — inserts missing emails only (never reactivates removed members). */
+export async function ensureDefaultTechnicalTeam() {
+  await connectDb();
+  const { TechnicalTeamMember } = getModels();
+  const defaults = [
+    {
+      name: "Hariom Singh",
+      designation: "Product Engineer",
+      department: "Product Engineering",
+      email: "hariom.singh@nattlabs.com",
+      phone: "+919559766238",
+    },
+    {
+      name: "Meenakshi Tripathi",
+      designation: "Product Engineer",
+      department: "Product Engineering",
+      email: "meenakshi.tripathi@nattlabs.com",
+      phone: "+919919293499",
+    },
+    {
+      name: "Pratistha Singh",
+      designation: "Product Engineer",
+      department: "Product Engineering",
+      email: "pratistha.singh@nattlabs.com",
+      phone: "+919120000104",
+    },
+    {
+      name: "Priyanshu Pandey",
+      designation: "Product Engineer",
+      department: "Product Engineering",
+      email: "priyanshu.pandey@nattlabs.com",
+      phone: "+918840164864",
+    },
+  ];
+
+  for (const d of defaults) {
+    const email = d.email.toLowerCase();
+    const existing = await TechnicalTeamMember.findOne({ email }).lean();
+    if (existing) continue;
+    await TechnicalTeamMember.create({ ...d, email, active: true });
+  }
+}
+
+export async function upsertTechnicalMemberByEmail(payload: {
+  name: string;
+  email: string;
+  phone?: string;
+  designation?: string;
+  department?: string;
+  specialty?: string;
+}) {
+  await connectDb();
+  const { TechnicalTeamMember } = getModels();
+  const email = payload.email.trim().toLowerCase();
+  const doc = await TechnicalTeamMember.findOneAndUpdate(
+    { email },
+    {
+      $set: {
+        name: payload.name.trim(),
+        phone: payload.phone?.trim() || undefined,
+        designation: payload.designation?.trim() || undefined,
+        department: payload.department?.trim() || "Product Engineering",
+        specialty: payload.specialty?.trim() || undefined,
+        active: true,
+      },
+      $setOnInsert: { email },
+    },
+    { upsert: true, new: true },
+  ).lean();
+  if (!doc) throw new Error("Failed to save team member");
+  return normalizeTechnicalMember(doc as Record<string, unknown>);
+}
+
+export async function importTechnicalTeamMembers(rows: Array<{
+  name: string;
+  email: string;
+  phone?: string;
+  designation?: string;
+  department?: string;
+}>) {
+  const created: string[] = [];
+  const updated: string[] = [];
+  const errors: string[] = [];
+
+  for (const row of rows) {
+    try {
+      const email = row.email.trim().toLowerCase();
+      await connectDb();
+      const { TechnicalTeamMember } = getModels();
+      const existing = await TechnicalTeamMember.findOne({ email }).lean();
+      await upsertTechnicalMemberByEmail(row);
+      if (existing) updated.push(email);
+      else created.push(email);
+    } catch (e: any) {
+      errors.push(`${row.email}: ${e?.message || "failed"}`);
+    }
+  }
+
+  return { created, updated, errors };
 }
 
 export async function getTechnicalMemberById(id: string) {
@@ -526,7 +628,7 @@ export async function createTechnicalMember(payload: {
     email,
     phone: payload.phone?.trim() || undefined,
     designation: payload.designation?.trim() || undefined,
-    department: payload.department?.trim() || "Technical Support",
+    department: payload.department?.trim() || "Product Engineering",
     specialty: payload.specialty?.trim() || undefined,
     active: true,
   });
@@ -614,17 +716,12 @@ export async function assignTechnicalEscalation(
   return { ticket: normalized, member };
 }
 
+/** Tickets created via Live Chat → Raise ticket form only. */
 export async function listAgentRaisedTickets() {
   await connectDb();
   const { Ticket } = getModels();
   const rows = await Ticket.find({
-    $or: [
-      { channel: "ADMIN_RAISED" },
-      { sourceChannel: "ADMIN_RAISED" },
-      { tags: LIVE_CHAT_RAISE_TICKET_TAG },
-      { tags: ADMIN_AGENT_RAISED_TAG },
-      { liveChatSessionId: { $exists: true, $nin: [null, ""] } },
-    ],
+    tags: LIVE_CHAT_RAISE_TICKET_TAG,
   })
     .sort({ createdAt: -1 })
     .limit(200)

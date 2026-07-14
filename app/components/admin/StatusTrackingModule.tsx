@@ -56,6 +56,7 @@ function TicketDetailModal({
   notifySms,
   onNotifyEmailChange,
   onNotifySmsChange,
+  onAssigned,
 }: {
   open: boolean;
   ticket: any;
@@ -73,6 +74,7 @@ function TicketDetailModal({
   notifySms: boolean;
   onNotifyEmailChange: (v: boolean) => void;
   onNotifySmsChange: (v: boolean) => void;
+  onAssigned?: (data: any) => void;
 }) {
   const [portalReady, setPortalReady] = useState(false);
 
@@ -114,6 +116,7 @@ function TicketDetailModal({
           notifySms={notifySms}
           onNotifyEmailChange={onNotifyEmailChange}
           onNotifySmsChange={onNotifySmsChange}
+          onAssigned={onAssigned}
         />
       </div>
     </div>
@@ -374,6 +377,15 @@ export function StatusTrackingModule({ agentUser }: { agentUser: AgentUser }) {
         notifySms={notifySms}
         onNotifyEmailChange={setNotifyEmail}
         onNotifySmsChange={setNotifySms}
+        onAssigned={async (data) => {
+          await refreshDetail();
+          const parts = [data?.message || "Assigned to technical team."];
+          if (data?.emailSent) parts.push("Email sent to assignee.");
+          if (data?.smsSent) parts.push("SMS sent to assignee.");
+          if (data?.emailError) parts.push(`Email issue: ${data.emailError}`);
+          if (data?.smsError) parts.push(`SMS issue: ${data.smsError}`);
+          setActionStatus(parts.join(" "));
+        }}
       />
     </div>
   );

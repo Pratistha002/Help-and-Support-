@@ -3,17 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { appPath } from "@/lib/apiBase";
-import { getAuthFromStorage } from "@/lib/auth";
+import { getAuthFromStorage, type GuestUser } from "@/lib/auth";
 import { supportApi } from "@/lib/supportApi";
 import { resolveConsumerType, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL } from "@/lib/supportConstants";
 import "../../components/support/help.css";
 
 export default function CallSupportPage() {
-  const { user } = getAuthFromStorage();
+  const [user, setUser] = useState<GuestUser | null>(null);
   const [form, setForm] = useState({
-    callerName: user?.fullName || "",
+    callerName: "",
     phone: "",
-    email: user?.email || "",
+    email: "",
   });
   const [done, setDone] = useState("");
   const [queuePos, setQueuePos] = useState<number | null>(null);
@@ -22,6 +22,15 @@ export default function CallSupportPage() {
   const [callConfig, setCallConfig] = useState<any>(null);
 
   useEffect(() => {
+    const { user: stored } = getAuthFromStorage();
+    setUser(stored);
+    if (stored) {
+      setForm((f) => ({
+        ...f,
+        callerName: f.callerName || stored.fullName || "",
+        email: f.email || stored.email || "",
+      }));
+    }
     supportApi.getCallConfig().then(setCallConfig).catch(() => null);
   }, []);
 
