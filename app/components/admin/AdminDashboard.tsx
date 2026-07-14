@@ -198,11 +198,15 @@ export function AdminDashboard() {
     if (!auth.token || !isAllowed) return;
     setHubStatsLoading(true);
     try {
-      const [counts, tickets] = await Promise.all([
+      const [counts, tickets, agentsPayload] = await Promise.all([
         supportApi.adminTicketStats(),
         supportApi.adminTickets(),
+        supportApi.adminAgentsWithRatings().catch(() => null),
       ]);
-      setHubStats(buildTicketDashboardStats(Array.isArray(tickets) ? tickets : [], counts || {}));
+      const csat = agentsPayload?.overall?.avgRating ?? 0;
+      setHubStats(
+        buildTicketDashboardStats(Array.isArray(tickets) ? tickets : [], counts || {}, csat || null),
+      );
     } catch {
       setHubStats(null);
     } finally {

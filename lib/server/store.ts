@@ -158,8 +158,27 @@ const supportAgentSchema = new Schema(
     notifyOnNewTickets: { type: Boolean, default: true },
     online: { type: Boolean, default: false },
     lastLoginAt: Date,
+    ratingSum: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
+    avgRating: { type: Number, default: 0 },
   },
   { timestamps: true, collection: "workforce_support_agents" },
+);
+
+const agentRatingSchema = new Schema(
+  {
+    sessionId: { type: String, required: true, unique: true },
+    agentId: String,
+    agentEmail: { type: String, required: true, lowercase: true, trim: true },
+    agentName: { type: String, required: true, trim: true },
+    userId: String,
+    userName: String,
+    userEmail: String,
+    rating: { type: Number, required: true, min: 1, max: 5 },
+    comment: { type: String, trim: true, maxlength: 500 },
+    tags: [{ type: String, trim: true }],
+  },
+  { timestamps: true, collection: "workforce_agent_ratings" },
 );
 
 const callbackSchema = new Schema(
@@ -196,6 +215,8 @@ const technicalTeamSchema = new Schema(
 function getModels() {
   if (mongoose.models.LiveChatSession) delete mongoose.models.LiveChatSession;
   if (mongoose.models.LiveChatMessage) delete mongoose.models.LiveChatMessage;
+  if (mongoose.models.SupportAgent) delete mongoose.models.SupportAgent;
+  if (mongoose.models.AgentRating) delete mongoose.models.AgentRating;
   const Ticket = (mongoose.models.SupportTicket as Model<TicketDoc>) || mongoose.model<TicketDoc>("SupportTicket", ticketSchema);
   const TicketMsg = mongoose.models.SupportTicketMessage || mongoose.model("SupportTicketMessage", ticketMsgSchema);
   const LiveSession = mongoose.models.LiveChatSession || mongoose.model("LiveChatSession", liveSessionSchema);
@@ -203,9 +224,11 @@ function getModels() {
   const CallbackRequest = mongoose.models.SupportCallbackRequest || mongoose.model("SupportCallbackRequest", callbackSchema);
   const SupportAgent = (mongoose.models.SupportAgent as Model<SupportAgentDoc>)
     || mongoose.model<SupportAgentDoc>("SupportAgent", supportAgentSchema);
+  const AgentRating = (mongoose.models.AgentRating as Model<AgentRatingDoc>)
+    || mongoose.model<AgentRatingDoc>("AgentRating", agentRatingSchema);
   const TechnicalTeamMember = mongoose.models.TechnicalTeamMember
     || mongoose.model("TechnicalTeamMember", technicalTeamSchema);
-  return { Ticket, TicketMsg, LiveSession, LiveMsg, CallbackRequest, SupportAgent, TechnicalTeamMember };
+  return { Ticket, TicketMsg, LiveSession, LiveMsg, CallbackRequest, SupportAgent, AgentRating, TechnicalTeamMember };
 }
 
 export type SupportAgentDoc = {
@@ -217,6 +240,24 @@ export type SupportAgentDoc = {
   notifyOnNewTickets?: boolean;
   online?: boolean;
   lastLoginAt?: Date;
+  ratingSum?: number;
+  ratingCount?: number;
+  avgRating?: number;
+};
+
+export type AgentRatingDoc = {
+  _id: mongoose.Types.ObjectId;
+  sessionId: string;
+  agentId?: string;
+  agentEmail: string;
+  agentName: string;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+  rating: number;
+  comment?: string;
+  tags?: string[];
+  createdAt?: Date;
 };
 
 export async function upsertSupportAgent(payload: { email: string; name: string; username?: string }) {
@@ -1288,4 +1329,234 @@ export async function updateCallbackStatus(id: string, status: string) {
   await connectDb();
   const { CallbackRequest } = getModels();
   return CallbackRequest.findByIdAndUpdate(id, { status }, { new: true }).lean();
+}
+
+function serializeAgentRating(r: AgentRatingDoc | Record<string, any>) {
+  return {
+    id: String(r._id),
+    sessionId: String(r.sessionId),
+    agentId: r.agentId ? String(r.agentId) : undefined,
+    agentEmail: String(r.agentEmail || ""),
+    agentName: String(r.agentName || ""),
+    userId: r.userId ? String(r.userId) : undefined,
+    userName: r.userName ? String(r.userName) : undefined,
+    userEmail: r.userEmail ? String(r.userEmail) : undefined,
+    rating: Number(r.rating),
+    comment: r.comment ? String(r.comment) : "",
+    tags: Array.isArray(r.tags) ? r.tags.map(String) : [],
+    createdAt: r.createdAt,
+  };
+}
+
+export async function getRatingForSession(sessionId: string) {
+  await connectDb();
+  const { AgentRating } = getModels();
+  const row = await AgentRating.findOne({ sessionId }).lean<AgentRatingDoc>();
+  return row ? serializeAgentRating(row) : null;
+}
+
+export async function submitAgentRating(payload: {
+  sessionId: string;
+  rating: number;
+  comment?: string;
+  tags?: string[];
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+}) {
+  await connectDb();
+  const { AgentRating, SupportAgent, LiveSession } = getModels();
+  const rating = Math.round(Number(payload.rating));
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    throw new Error("Rating must be between 1 and 5");
+  }
+
+  const session = (await LiveSession.findById(payload.sessionId).lean()) as {
+    status?: string;
+    assignedAdminEmail?: string;
+    assignedAdminId?: string;
+    assignedAdminName?: string;
+  } | null;
+  if (!session) throw new Error("Chat session not found");
+  if (session.status !== "CLOSED") throw new Error("You can rate only after the chat ends");
+  if (!session.assignedAdminEmail && !session.assignedAdminId) {
+    throw new Error("No agent was assigned to this chat");
+  }
+
+  const existing = await AgentRating.findOne({ sessionId: payload.sessionId }).lean();
+  if (existing) throw new Error("You have already rated this chat");
+
+  const agentEmail = String(session.assignedAdminEmail || "").trim().toLowerCase();
+  const agentName = String(session.assignedAdminName || agentEmail || "Support agent");
+  const agentId = session.assignedAdminId ? String(session.assignedAdminId) : undefined;
+  const tags = (payload.tags || [])
+    .map((t) => String(t).trim())
+    .filter(Boolean)
+    .slice(0, 6);
+  const comment = (payload.comment || "").trim().slice(0, 500);
+
+  const created = await AgentRating.create({
+    sessionId: payload.sessionId,
+    agentId,
+    agentEmail: agentEmail || "unknown",
+    agentName,
+    userId: payload.userId,
+    userName: payload.userName,
+    userEmail: payload.userEmail,
+    rating,
+    comment: comment || undefined,
+    tags,
+  });
+
+  if (agentEmail) {
+    await SupportAgent.updateOne(
+      { email: agentEmail },
+      {
+        $inc: { ratingSum: rating, ratingCount: 1 },
+        $set: { name: agentName, username: agentName },
+        $setOnInsert: { email: agentEmail, notifyOnNewTickets: true },
+      },
+      { upsert: true },
+    );
+    const agent = await SupportAgent.findOne({ email: agentEmail }).lean<SupportAgentDoc>();
+    if (agent) {
+      const count = Math.max(1, Number(agent.ratingCount || 0));
+      const sum = Number(agent.ratingSum || 0);
+      await SupportAgent.updateOne(
+        { email: agentEmail },
+        { $set: { avgRating: Math.round((sum / count) * 10) / 10 } },
+      );
+    }
+  }
+
+  return serializeAgentRating(created.toObject ? created.toObject() : created);
+}
+
+export async function listSupportAgentsWithRatings() {
+  await connectDb();
+  const { SupportAgent, AgentRating, Ticket, LiveSession } = getModels();
+  const agents = await SupportAgent.find({}).sort({ lastLoginAt: -1, name: 1 }).lean<SupportAgentDoc[]>();
+  const recent = await AgentRating.find({})
+    .sort({ createdAt: -1 })
+    .limit(200)
+    .lean<AgentRatingDoc[]>();
+
+  const byEmail = new Map<string, ReturnType<typeof serializeAgentRating>[]>();
+  for (const r of recent) {
+    const key = String(r.agentEmail || "").toLowerCase();
+    if (!key) continue;
+    const list = byEmail.get(key) || [];
+    list.push(serializeAgentRating(r));
+    byEmail.set(key, list);
+  }
+
+  const emails = agents.map((a) => String(a.email).toLowerCase()).filter(Boolean);
+  const ids = agents.map((a) => String(a._id));
+
+  const ticketMatch =
+    emails.length || ids.length
+      ? {
+          $or: [
+            ...(emails.length ? [{ assignedAdminEmail: { $in: emails } }, { assignedAgentEmail: { $in: emails } }] : []),
+            ...(ids.length ? [{ assignedAdminId: { $in: ids } }, { assignedAgentId: { $in: ids } }] : []),
+          ],
+        }
+      : null;
+
+  const tickets = ticketMatch
+    ? await Ticket.find(ticketMatch)
+        .select("status assignedAdminEmail assignedAdminId assignedAgentEmail assignedAgentId")
+        .lean()
+    : [];
+
+  const liveChats = emails.length
+    ? await LiveSession.find({
+        assignedAdminEmail: { $in: emails },
+        status: { $in: ["CLOSED", "ACTIVE"] },
+      })
+        .select("status assignedAdminEmail assignedAdminId")
+        .lean()
+    : [];
+
+  type AgentCounters = {
+    ticketsSolved: number;
+    ticketsAssigned: number;
+    liveChatsHandled: number;
+  };
+  const counters = new Map<string, AgentCounters>();
+  const bump = (key: string, field: keyof AgentCounters, n = 1) => {
+    if (!key) return;
+    const cur = counters.get(key) || { ticketsSolved: 0, ticketsAssigned: 0, liveChatsHandled: 0 };
+    cur[field] += n;
+    counters.set(key, cur);
+  };
+
+  for (const t of tickets) {
+    const email = String(t.assignedAdminEmail || t.assignedAgentEmail || "").toLowerCase();
+    const id = String(t.assignedAdminId || t.assignedAgentId || "");
+    const keys = [email, id].filter(Boolean);
+    const solved = t.status === "RESOLVED" || t.status === "CLOSED";
+    for (const key of keys) {
+      bump(key, "ticketsAssigned");
+      if (solved) bump(key, "ticketsSolved");
+    }
+  }
+
+  for (const s of liveChats) {
+    const email = String(s.assignedAdminEmail || "").toLowerCase();
+    const id = String(s.assignedAdminId || "");
+    if (email) bump(email, "liveChatsHandled");
+    if (id) bump(id, "liveChatsHandled");
+  }
+
+  return agents.map((a) => {
+    const email = String(a.email).toLowerCase();
+    const id = String(a._id);
+    const ratings = byEmail.get(email) || [];
+    const count = Number(a.ratingCount || 0);
+    const avg = count > 0 ? Number(a.avgRating || 0) : 0;
+    const byEmailStats = counters.get(email) || { ticketsSolved: 0, ticketsAssigned: 0, liveChatsHandled: 0 };
+    const byIdStats = counters.get(id) || { ticketsSolved: 0, ticketsAssigned: 0, liveChatsHandled: 0 };
+    return {
+      id,
+      email: String(a.email),
+      name: String(a.name || a.email),
+      username: a.username ? String(a.username) : undefined,
+      lastLoginAt: a.lastLoginAt,
+      online: Boolean(a.online),
+      avgRating: avg,
+      ratingCount: count,
+      ticketsSolved: Math.max(byEmailStats.ticketsSolved, byIdStats.ticketsSolved),
+      ticketsAssigned: Math.max(byEmailStats.ticketsAssigned, byIdStats.ticketsAssigned),
+      liveChatsHandled: Math.max(byEmailStats.liveChatsHandled, byIdStats.liveChatsHandled),
+      recentRatings: ratings.slice(0, 20),
+    };
+  });
+}
+
+export async function getOverallAgentRatingStats() {
+  await connectDb();
+  const { AgentRating, Ticket } = getModels();
+  const [rows, solvedCount] = await Promise.all([
+    AgentRating.aggregate([
+      {
+        $group: {
+          _id: null,
+          count: { $sum: 1 },
+          sum: { $sum: "$rating" },
+          avg: { $avg: "$rating" },
+        },
+      },
+    ]),
+    Ticket.countDocuments({ status: { $in: ["RESOLVED", "CLOSED"] }, assignedAdminEmail: { $exists: true, $ne: "" } }),
+  ]);
+  const row = rows[0];
+  if (!row || !row.count) {
+    return { ratingCount: 0, avgRating: 0, ticketsSolved: solvedCount };
+  }
+  return {
+    ratingCount: Number(row.count),
+    avgRating: Math.round(Number(row.avg) * 10) / 10,
+    ticketsSolved: solvedCount,
+  };
 }

@@ -18,6 +18,7 @@ export type TicketDashboardStats = {
 export function buildTicketDashboardStats(
   tickets: any[],
   statusCounts: Record<string, number> = {},
+  csatScore?: number | null,
 ): TicketDashboardStats {
   const byStatus: Record<string, number> = {};
   const byConsumer: Record<string, number> = {};
@@ -73,6 +74,9 @@ export function buildTicketDashboardStats(
     ticketsByPriority: byPriority,
     resolutionRatePercent: resolutionRate,
     averageResponseTimeHours,
-    customerSatisfactionScore: 4.2,
+    customerSatisfactionScore:
+      typeof csatScore === "number" && Number.isFinite(csatScore) && csatScore > 0
+        ? Math.round(csatScore * 10) / 10
+        : 0,
   };
 }

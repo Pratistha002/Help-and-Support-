@@ -60,6 +60,17 @@ export const supportApi = {
     supportFetch(`/api/support/live-chat/sessions/${id}/seen/`, { method: "POST", body: "{}" }),
   liveChatClose: (id: string) =>
     supportFetch(`/api/support/live-chat/sessions/${id}/close/`, { method: "POST", body: "{}" }),
+  liveChatGetRating: (id: string) =>
+    supportFetch(`/api/support/live-chat/sessions/${id}/rating/`),
+  liveChatSubmitRating: (
+    id: string,
+    payload: { rating: number; comment?: string; tags?: string[] },
+  ) =>
+    supportFetch(`/api/support/live-chat/sessions/${id}/rating/`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  adminAgentsWithRatings: () => supportFetch("/api/support/admin/agents/"),
   adminLiveChatSessions: () => supportFetch("/api/support/admin/live-chat/sessions/"),
   adminLiveChatAccept: (id: string) =>
     supportFetch(`/api/support/admin/live-chat/sessions/${id}/accept/`, { method: "POST", body: "{}" }),

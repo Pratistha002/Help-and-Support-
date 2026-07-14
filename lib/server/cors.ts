@@ -4,8 +4,10 @@ const LOCAL_DEV_ORIGINS = [
   "http://localhost:3002",
   "http://localhost:3003",
   "http://localhost:3000",
+  "http://localhost:3300",
   "http://127.0.0.1:3002",
   "http://127.0.0.1:3003",
+  "http://127.0.0.1:3300",
 ];
 
 export function getAllowedOrigins(): string[] {
@@ -34,7 +36,7 @@ export function corsHeaders(origin: string | null): HeadersInit {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Help-Desk-Key, X-Admin-Key",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
